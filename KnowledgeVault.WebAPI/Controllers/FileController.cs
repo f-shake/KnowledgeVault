@@ -1,4 +1,4 @@
-﻿using KnowledgeVault.Core.Service;
+﻿using KnowledgeVault.WebAPI.Service;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KnowledgeVault.WebAPI.Controllers
@@ -7,13 +7,13 @@ namespace KnowledgeVault.WebAPI.Controllers
     /// 文件操作控制器
     /// </summary>
     /// <param name="config"></param>
-    /// <param name="achievementService"></param>
+    /// <param name="fileService"></param>
     [ApiController]
     [Route("File")]
-    public class FileController(IConfiguration config, AchievementService achievementService) : KnowledgeVaultControllerBase
+    public class FileController(IConfiguration config, FileService fileService) : KnowledgeVaultControllerBase
     {
         private readonly IConfiguration config = config;
-        private readonly AchievementService achievementService = achievementService;
+        private readonly FileService fileService = fileService;
 
         /// <summary>
         /// 上传文件。返回值包括一个id和一个extension，分别填写到实体的两个属性中
@@ -23,25 +23,28 @@ namespace KnowledgeVault.WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> UploadAsync(IFormFile file)
         {
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest("未选择要上传的文件。");
-            }
+            return Ok(await fileService.UploadAsync(file, config["AppConfiguration:BaseDir"]));
+        }
 
-            var id = Guid.NewGuid().ToString("N");
-            var extension=Path.GetExtension(file.FileName);
-            var filePath = Path.Combine(config["AppConfiguration:BaseDir"], id);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            return Ok(new
-            {
-                FileID=id,
-                Extension=extension
-            });
+        /// <summary>
+        /// 上传文件，并根据文件名自动插入成果
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("Import")]
+        public async Task<IActionResult> ImportAsync(IFormFile file)
+        {
+            return Ok(await fileService.ImportAsync(file, config["AppConfiguration:BaseDir"]));
+        }
+        /// <summary>
+        /// 批量上传文件，所有文件放置在一个ZIP中，并根据文件名自动插入成果
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("ImportAll")]
+        public async Task<IActionResult> ImportAllAsync(IFormFile file)
+        {
+            return Ok(await fileService.ImportAllAsync(file, config["AppConfiguration:BaseDir"]));
         }
 
         /// <summary>
@@ -52,27 +55,10 @@ namespace KnowledgeVault.WebAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> DownloadAsync(string id)
         {
-            var filePath = Path.Combine(config["AppConfiguration:BaseDir"], id.ToString());
-
-            if (!System.IO.File.Exists(filePath))
-            {
-                return NotFound("找不到指定的文件");
-            }
-
-            var fileStream = System.IO.File.OpenRead(filePath);
             var mimeType = "application/octet-stream";
-
-            string fileName = null;
-            try
-            {
-                fileName = await achievementService.GetFileNameAsync(id);
-            }
-            catch(KeyNotFoundException)
-            {
-                return NotFound("找不到对应的成果");
-            }
-
-            return File(fileStream, mimeType, fileName);
+            var file = await fileService.DownloadAsync(id, config["AppConfiguration:BaseDir"]);
+            var stream = System.IO.File.OpenRead(file.DiskFilePath);
+            return File(stream, mimeType, file.FileName);
         }
     }
 

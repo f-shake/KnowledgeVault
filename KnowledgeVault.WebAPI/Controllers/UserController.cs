@@ -1,5 +1,5 @@
-using KnowledgeVault.Core.Entity;
-using KnowledgeVault.Core.Service;
+using KnowledgeVault.WebAPI.Entity;
+using KnowledgeVault.WebAPI.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

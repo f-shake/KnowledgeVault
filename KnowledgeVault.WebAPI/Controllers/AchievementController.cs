@@ -1,6 +1,6 @@
-﻿using KnowledgeVault.Core.Dto;
-using KnowledgeVault.Core.Entity;
-using KnowledgeVault.Core.Service;
+﻿using KnowledgeVault.WebAPI.Dto;
+using KnowledgeVault.WebAPI.Entity;
+using KnowledgeVault.WebAPI.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 
@@ -41,7 +41,7 @@ namespace KnowledgeVault.WebAPI.Controllers
         }
 
         /// <summary>
-        /// 更新的成果
+        /// 更新成果
         /// </summary>
         /// <param name="achievement"></param>
         /// <returns></returns>
@@ -49,6 +49,18 @@ namespace KnowledgeVault.WebAPI.Controllers
         public async Task<IActionResult> UpdateAsync(AchievementEntity achievement)
         {
             await achievementService.UpdateAsync(achievement);
+            return Ok();
+        }
+
+        /// <summary>
+        /// 删除成果
+        /// </summary>
+        /// <param name="id">成果ID</param>
+        /// <returns></returns>
+        [HttpPost("Delete")]
+        public async Task<IActionResult> DeleteAsync(int id)
+        {
+            await achievementService.DeleteAsync(id);
             return Ok();
         }
     }

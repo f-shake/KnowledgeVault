@@ -1,4 +1,4 @@
-﻿using KnowledgeVault.Core.Service;
+﻿using KnowledgeVault.WebAPI.Service;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KnowledgeVault.WebAPI.Controllers

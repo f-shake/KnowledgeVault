@@ -1,5 +1,8 @@
-﻿namespace KnowledgeVault.Core.Entity
+﻿namespace KnowledgeVault.WebAPI.Entity
 {
+    /// <summary>
+    /// 成果实体
+    /// </summary>
     public class AchievementEntity : EntityBase
     {
         /// <summary>
@@ -26,6 +29,7 @@
         /// 成果发表年份，0表示未填写
         /// </summary>
         public int Year { get; set; }
+
         /// <summary>
         /// 成果类型，0未知；1论文；2专利；3软著；4奖项
         /// </summary>
@@ -40,6 +44,16 @@
         /// 成果领域
         /// </summary>
         public string Theme { get; set; }
+
+        /// <summary>
+        /// 期刊名
+        /// </summary>
+        public string Journal { get; set; }
+
+        /// <summary>
+        /// 专利号/申请号等
+        /// </summary>
+        public string Number { get; set; }
 
         /// <summary>
         /// 对应的文件识别码。调用时，使用/File?id={FileID}

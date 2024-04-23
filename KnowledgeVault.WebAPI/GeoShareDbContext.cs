@@ -1,4 +1,4 @@
-﻿using KnowledgeVault.Core.Entity;
+﻿using KnowledgeVault.WebAPI.Entity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace KnowledgeVault.Core
+namespace KnowledgeVault.WebAPI
 {
     public class KnowledgeVaultDbContext : DbContext
     {

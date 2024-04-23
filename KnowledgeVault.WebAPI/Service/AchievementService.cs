@@ -1,5 +1,5 @@
-﻿using KnowledgeVault.Core.Dto;
-using KnowledgeVault.Core.Entity;
+﻿using KnowledgeVault.WebAPI.Dto;
+using KnowledgeVault.WebAPI.Entity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KnowledgeVault.Core.Service
+namespace KnowledgeVault.WebAPI.Service
 {
     public class AchievementService(KnowledgeVaultDbContext db)
     {
@@ -19,6 +19,8 @@ namespace KnowledgeVault.Core.Service
             { nameof(AchievementEntity.FirstAuthor), query => query.OrderBy(p => p.FirstAuthor) },
             { nameof(AchievementEntity.Correspond), query => query.OrderBy(p => p.Correspond) },
             { nameof(AchievementEntity.Type), query => query.OrderBy(p => p.Type) },
+            { nameof(AchievementEntity.SubType), query => query.OrderBy(p => p.SubType) },
+            { nameof(AchievementEntity.Title), query => query.OrderBy(p => p.Title) },
             { nameof(AchievementEntity.Theme), query => query.OrderBy(p => p.Theme) }
         };
 
@@ -30,21 +32,16 @@ namespace KnowledgeVault.Core.Service
         }
         public async Task<PagedListDto<AchievementEntity>> GetAllAsync(PagedListRequestDto request)
         {
-            IQueryable<AchievementEntity> query = db.Achievements;
+            IQueryable<AchievementEntity> query = db.Achievements.EnsureNotDeleted();
 
-            // 应用分页
-            if (request.PageIndex >= 0 && request.PageSize > 0)
-            {
-                query = query.Skip((request.PageIndex - 1) * request.PageSize)
-                             .Take(request.PageSize);
-            }
+            //筛选
             if (request.Year.HasValue)
             {
                 query = query.Where(p => p.Year == request.Year);
             }
             if (!string.IsNullOrEmpty(request.Author))
             {
-                query = query.Where(p => p.FirstAuthor == request.Author || p.AllAuthors.Contains(request.Author));
+                query = query.Where(p => p.FirstAuthor.Contains(request.Author));
             }
             if (!string.IsNullOrEmpty(request.Correspond))
             {
@@ -54,25 +51,29 @@ namespace KnowledgeVault.Core.Service
             {
                 query = query.Where(p => p.Type == request.Type);
             }
-
             if (!string.IsNullOrEmpty(request.Theme))
             {
                 query = query.Where(p => p.Theme == request.Theme);
             }
+            if (!string.IsNullOrEmpty(request.Title))
+            {
+                query = query.Where(p => p.Title.Contains(request.Title));
+            }
+            if (!string.IsNullOrEmpty(request.SubType))
+            {
+                query = query.Where(p => p.SubType == request.SubType);
+            }
 
-            // 应用过滤条件
-            //if (request.Filters != null && request.Filters.Count > 0)
-            //{
-            //    foreach (var filter in request.Filters)
-            //    {
-            //        if (filterMap.TryGetValue(filter.Key, out var filterFunc))
-            //        {
-            //            query = filterFunc(query, filter.Value);
-            //        }
-            //    }
-            //}
+            var totalCount = await query.CountAsync();
 
-            // 应用排序
+            // 分页
+            if (request.PageIndex >= 0 && request.PageSize > 0)
+            {
+                query = query.Skip((request.PageIndex - 1) * request.PageSize)
+                             .Take(request.PageSize);
+            }
+
+            // 排序
             if (request.SortField != null && sortMap.TryGetValue(request.SortField, out var sortFunc))
             {
                 query = sortFunc(query);
@@ -82,7 +83,7 @@ namespace KnowledgeVault.Core.Service
             var pagedListDto = new PagedListDto<AchievementEntity>
             {
                 Items = await query.ToListAsync(),
-                TotalCount = await query.CountAsync(),
+                TotalCount = totalCount,
                 PageIndex = request.PageIndex,
                 PageSize = request.PageSize
             };
@@ -92,12 +93,12 @@ namespace KnowledgeVault.Core.Service
 
         public async Task<int> InsertAsync(AchievementEntity achievement)
         {
-            bool isDuplicateName = await db.Achievements
-                .AnyAsync(a => a.Title == achievement.Title);
+            bool isDuplicateName = await db.Achievements.EnsureNotDeleted()
+                .AnyAsync(a => a.Title == achievement.Title && a.Type == achievement.Type);
 
             if (isDuplicateName)
             {
-                throw new InvalidOperationException("已存在相同名称的成果。");
+                throw new StatusBasedException("已存在相同名称的成果。", System.Net.HttpStatusCode.Conflict);
             }
 
             await db.Achievements.AddAsync(achievement);
@@ -107,10 +108,24 @@ namespace KnowledgeVault.Core.Service
 
         public async Task UpdateAsync(AchievementEntity achievement)
         {
+            var existed = db.Achievements.Find(achievement.Id);
+            if (existed == null || existed.IsDeleted)
+            {
+                throw new StatusBasedException($"找不到ID为{achievement.Id}的成果", System.Net.HttpStatusCode.NotFound);
+            }
             db.Achievements.Attach(achievement);
             db.Entry(achievement).State = EntityState.Modified;
             await db.SaveChangesAsync();
         }
+
+        public async Task DeleteAsync(int id)
+        {
+            var entity = db.Achievements.Find(id) ?? throw new StatusBasedException($"找不到ID为{id}的成果", System.Net.HttpStatusCode.NotFound);
+            entity.IsDeleted = true;
+            db.Entry(entity).State = EntityState.Modified;
+            await db.SaveChangesAsync();
+        }
+
     }
 
 }

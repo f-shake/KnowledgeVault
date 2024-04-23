@@ -7,12 +7,9 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
+
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\KnowledgeVault.Core\KnowledgeVault.Core.csproj" />
-  </ItemGroup>
-
 </Project>

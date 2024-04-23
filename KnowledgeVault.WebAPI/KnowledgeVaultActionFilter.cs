@@ -1,43 +1,58 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
-using KnowledgeVault.Core.Dto;
+using KnowledgeVault.WebAPI.Dto;
+using KnowledgeVault.WebAPI;
 
 
-public class KnowledgeVaultActionFilter : IActionFilter
+public class KnowledgeVaultActionFilter(IConfiguration config) : IActionFilter
 {
+    private readonly IConfiguration config = config;
+
     public void OnActionExecuting(ActionExecutingContext context)
     {
-        if (!context.HttpContext.Request.Path.HasValue)
+        var token = config["AppConfiguration:Token"];
+        if (context.HttpContext.Request.Method is not ("GET" or "OPTION") && !string.IsNullOrEmpty(token))
         {
-            throw new Exception();
+            var headers = context.HttpContext.Request.Headers;
+            if (headers.ContainsKey("Authorization"))
+            {
+                if (headers["Authorization"] != token)
+                {
+                    context.Result = new UnauthorizedObjectResult("登陆密钥不正确");
+                }
+            }
+            else
+            {
+                context.Result = new UnauthorizedObjectResult("敏感操作，未登录");
+            }
         }
-        if (context.HttpContext.Request.Method=="GET")
-        {
-            return;
-        }
-        //if (context.HttpContext.Session.GetInt32("user") == null)
-        //{
-        //    context.Result = new UnauthorizedObjectResult("未登录");// new ObjectResult(new HttpResponseContainer(HttpResponseStatus.Unauthorized, "未登录", null));
-        //}
     }
 
     public void OnActionExecuted(ActionExecutedContext context)
     {
-        //if (context.Exception == null)
-        //{
-        //    if (context.Result is ObjectResult r)
-        //    {
-        //        context.Result = new ObjectResult(new HttpResponseContainer(HttpResponseStatus.OK, null, r.Value));
-        //    }
-        //    else
-        //    {
-        //        context.Result = new ObjectResult(new HttpResponseContainer(HttpResponseStatus.OK, null, context.Result));
-        //    }
-        //}
-        //else
-        //{
-        //    context.Result = new ObjectResult(new HttpResponseContainer(HttpResponseStatus.ServiceUnavailable, context.Exception.Message, context.Exception.ToString()));
-        //    context.Exception = null;
-        //}
+        if (context.Exception != null)
+        {
+            if (context.Exception is StatusBasedException sbe)
+            {
+                if (string.IsNullOrEmpty(sbe.Message))
+                {
+                    context.Result = new StatusCodeResult((int)sbe.StatusCode);
+                }
+                else
+                {
+                    context.Result = new ObjectResult(sbe.Message) { StatusCode = (int)sbe.StatusCode };
+                }
+                context.ExceptionHandled = true;
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(context.Exception.Message))
+                {
+                    context.Result = new ObjectResult(context.Exception.Message) { StatusCode = 500 };
+                    context.ExceptionHandled = true;
+                }
+                context.ExceptionHandled = true;
+            }
+        }
     }
 }

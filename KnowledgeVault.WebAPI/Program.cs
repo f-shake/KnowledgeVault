@@ -1,14 +1,26 @@
-using KnowledgeVault.Core;
-using KnowledgeVault.Core.Service;
+using KnowledgeVault.WebAPI;
+using KnowledgeVault.WebAPI.Service;
 using Microsoft.Extensions.Configuration;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
+
+string cors = "CorsPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<KnowledgeVaultDbContext>();
+builder.Services.AddTransient<AchievementService>();
+builder.Services.AddTransient<PropertyService>();
+builder.Services.AddTransient<FileService>();
+builder.Services.AddTransient<KnowledgeVaultActionFilter>();
+
+IServiceProvider serviceProvider = null;
 
 // Add services to the container.
 
 builder.Services.AddControllers(o =>
 {
-    o.Filters.Add(new KnowledgeVaultActionFilter());
+    o.Filters.Add(serviceProvider.GetRequiredService<KnowledgeVaultActionFilter>());
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -17,6 +29,26 @@ builder.Services.AddSwaggerGen(p =>
     var basePath = Path.GetDirectoryName(typeof(Program).Assembly.Location);//获取应用程序所在目录（绝对，不受工作目录影响，建议采用此方法获取路径）
     var xmlPath = Path.Combine(basePath, "KnowledgeVault.WebAPI.xml");
     p.IncludeXmlComments(xmlPath);
+
+
+
+    var scheme = new OpenApiSecurityScheme()
+    {
+        Description = "Authorization header",
+        Reference = new OpenApiReference
+        {
+            Type = ReferenceType.SecurityScheme,
+            Id = "Authorization"
+        },
+        Scheme = "oauth2",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+    };
+    p.AddSecurityDefinition("Authorization", scheme);
+    var requirement = new OpenApiSecurityRequirement();
+    requirement[scheme] = new List<string>();
+    p.AddSecurityRequirement(requirement);
 });
 builder.Services.AddMemoryCache();
 builder.Services.AddDistributedMemoryCache();
@@ -28,23 +60,31 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+builder.Services.AddCors(policy =>
+{
 
-builder.Services.AddDbContext<KnowledgeVaultDbContext>();
-builder.Services.AddTransient<AchievementService>();
-builder.Services.AddTransient<PropertyService>();
+    policy.AddPolicy(cors, opt => opt
+    .AllowAnyOrigin()
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .WithExposedHeaders("X-Pagination"));
+
+});
 
 
 var app = builder.Build();
+serviceProvider = app.Services;
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 //{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 //}
 
 app.UseHttpsRedirection();
 app.UseSession();
+app.UseCors(cors);
 app.UseAuthorization();
 
 app.MapControllers();

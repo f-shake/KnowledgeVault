@@ -1,4 +1,4 @@
-﻿namespace KnowledgeVault.Core.Dto
+﻿namespace KnowledgeVault.WebAPI.Dto
 {
     public class PagedListDto<T>
     {
