@@ -13,18 +13,6 @@ namespace KnowledgeVault.WebAPI.Service
 {
     public class AchievementService(KnowledgeVaultDbContext db)
     {
-        private static readonly Dictionary<string, Func<IQueryable<AchievementEntity>, IOrderedQueryable<AchievementEntity>>> sortMap = new Dictionary<string, Func<IQueryable<AchievementEntity>, IOrderedQueryable<AchievementEntity>>>
-        {
-            { nameof(AchievementEntity.Year), query => query.OrderBy(p => p.Year) },
-            { nameof(AchievementEntity.FirstAuthor), query => query.OrderBy(p => p.FirstAuthor) },
-            { nameof(AchievementEntity.Correspond), query => query.OrderBy(p => p.Correspond) },
-            { nameof(AchievementEntity.Type), query => query.OrderBy(p => p.Type) },
-            { nameof(AchievementEntity.SubType), query => query.OrderBy(p => p.SubType) },
-            { nameof(AchievementEntity.Title), query => query.OrderBy(p => p.Title) },
-            { nameof(AchievementEntity.Theme), query => query.OrderBy(p => p.Theme) }
-        };
-
-
         public async Task<string> GetFileNameAsync(string fileID)
         {
             var entity = await db.Achievements.Where(p => p.FileID == fileID).FirstOrDefaultAsync() ?? throw new KeyNotFoundException();
@@ -41,11 +29,11 @@ namespace KnowledgeVault.WebAPI.Service
             }
             if (!string.IsNullOrEmpty(request.Author))
             {
-                query = query.Where(p => p.FirstAuthor.Contains(request.Author));
+                query = query.Where(p => p.FirstAuthor.Contains(request.Author, StringComparison.InvariantCultureIgnoreCase));
             }
             if (!string.IsNullOrEmpty(request.Correspond))
             {
-                query = query.Where(p => p.Correspond == request.Correspond);
+                query = query.Where(p => p.Correspond.Contains(request.Correspond, StringComparison.InvariantCultureIgnoreCase));
             }
             if (request.Type.HasValue)
             {
@@ -57,7 +45,7 @@ namespace KnowledgeVault.WebAPI.Service
             }
             if (!string.IsNullOrEmpty(request.Title))
             {
-                query = query.Where(p => p.Title.Contains(request.Title));
+                query = query.Where(p => p.Title.Contains(request.Title, StringComparison.InvariantCultureIgnoreCase));
             }
             if (!string.IsNullOrEmpty(request.SubType))
             {
@@ -74,7 +62,38 @@ namespace KnowledgeVault.WebAPI.Service
             }
 
             // 排序
-            if (request.SortField != null && sortMap.TryGetValue(request.SortField, out var sortFunc))
+            Dictionary<string, Func<IQueryable<AchievementEntity>, IOrderedQueryable<AchievementEntity>>> sortMap;
+            if (request.SortOrder)
+            {
+                sortMap = new Dictionary<string, Func<IQueryable<AchievementEntity>, IOrderedQueryable<AchievementEntity>>>
+                {
+                    { nameof(AchievementEntity.CreateTime).ToLower(), query => query.OrderBy(p => p.CreateTime) },
+                    { nameof(AchievementEntity.ModifiedTime).ToLower(), query => query.OrderBy(p => p.ModifiedTime) },
+                    { nameof(AchievementEntity.Year).ToLower(), query => query.OrderBy(p => p.Year) },
+                    { nameof(AchievementEntity.FirstAuthor).ToLower(), query => query.OrderBy(p => p.FirstAuthor) },
+                    { nameof(AchievementEntity.Correspond).ToLower(), query => query.OrderBy(p => p.Correspond) },
+                    { nameof(AchievementEntity.Type).ToLower(), query => query.OrderBy(p => p.Type) },
+                    { nameof(AchievementEntity.SubType).ToLower(), query => query.OrderBy(p => p.SubType) },
+                    { nameof(AchievementEntity.Title).ToLower(), query => query.OrderBy(p => p.Title) },
+                    { nameof(AchievementEntity.Theme).ToLower(), query => query.OrderBy(p => p.Theme) }
+                };
+            }
+            else
+            {
+                sortMap = new Dictionary<string, Func<IQueryable<AchievementEntity>, IOrderedQueryable<AchievementEntity>>>
+                {
+                    { nameof(AchievementEntity.CreateTime).ToLower(), query => query.OrderByDescending(p => p.CreateTime) },
+                    { nameof(AchievementEntity.ModifiedTime).ToLower(), query => query.OrderByDescending(p => p.ModifiedTime) },
+                    { nameof(AchievementEntity.Year).ToLower(), query => query.OrderByDescending(p => p.Year) },
+                    { nameof(AchievementEntity.FirstAuthor).ToLower(), query => query.OrderByDescending(p => p.FirstAuthor) },
+                    { nameof(AchievementEntity.Correspond).ToLower(), query => query.OrderByDescending(p => p.Correspond) },
+                    { nameof(AchievementEntity.Type).ToLower(), query => query.OrderByDescending(p => p.Type) },
+                    { nameof(AchievementEntity.SubType).ToLower(), query => query.OrderByDescending(p => p.SubType) },
+                    { nameof(AchievementEntity.Title).ToLower(), query => query.OrderByDescending(p => p.Title) },
+                    { nameof(AchievementEntity.Theme).ToLower(), query => query.OrderByDescending(p => p.Theme) }
+                };
+            }
+            if (request.SortField != null && sortMap.TryGetValue(request.SortField.ToLower(), out var sortFunc))
             {
                 query = sortFunc(query);
             }
@@ -100,8 +119,9 @@ namespace KnowledgeVault.WebAPI.Service
             {
                 throw new StatusBasedException("已存在相同名称的成果。", System.Net.HttpStatusCode.Conflict);
             }
-
-            await db.Achievements.AddAsync(achievement);
+            achievement.CreateTime = DateTime.Now;
+            achievement.ModifiedTime = DateTime.Now;
+            db.Achievements.Add(achievement);
             await db.SaveChangesAsync();
             return achievement.Id;
         }
@@ -113,6 +133,7 @@ namespace KnowledgeVault.WebAPI.Service
             {
                 throw new StatusBasedException($"找不到ID为{achievement.Id}的成果", System.Net.HttpStatusCode.NotFound);
             }
+            achievement.ModifiedTime = DateTime.Now;
             db.Achievements.Attach(achievement);
             db.Entry(achievement).State = EntityState.Modified;
             await db.SaveChangesAsync();
@@ -122,6 +143,7 @@ namespace KnowledgeVault.WebAPI.Service
         {
             var entity = db.Achievements.Find(id) ?? throw new StatusBasedException($"找不到ID为{id}的成果", System.Net.HttpStatusCode.NotFound);
             entity.IsDeleted = true;
+            entity.ModifiedTime = DateTime.Now;
             db.Entry(entity).State = EntityState.Modified;
             await db.SaveChangesAsync();
         }

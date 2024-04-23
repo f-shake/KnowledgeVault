@@ -14,5 +14,15 @@ namespace KnowledgeVault.WebAPI.Entity
         /// 是否已删除
         /// </summary>
         public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        public DateTime CreateTime {  get; set; }
+
+        /// <summary>
+        /// 修改时间
+        /// </summary>
+        public DateTime ModifiedTime { get; set; }
     }
 }
