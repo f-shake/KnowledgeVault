@@ -1,5 +1,6 @@
 ﻿using KnowledgeVault.WebAPI.Dto;
 using KnowledgeVault.WebAPI.Entity;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -18,6 +19,17 @@ namespace KnowledgeVault.WebAPI.Service
             var entity = await db.Achievements.Where(p => p.FileID == fileID).FirstOrDefaultAsync() ?? throw new KeyNotFoundException();
             return $"{entity.FirstAuthor} {entity.Title}{entity.FileExtension}";
         }
+
+        public async Task<AchievementEntity> GetAsync(int id)
+        {
+            var entity = db.Achievements.Find(id) ?? throw new StatusBasedException($"找不到ID为{id}的成果", System.Net.HttpStatusCode.NotFound);
+            if (entity.IsDeleted)
+            {
+                throw new StatusBasedException($"ID为{id}的成果已删除", System.Net.HttpStatusCode.NotFound);
+            }
+            return entity;
+        }
+
         public async Task<PagedListDto<AchievementEntity>> GetAllAsync(PagedListRequestDto request)
         {
             IQueryable<AchievementEntity> query = db.Achievements.EnsureNotDeleted();
@@ -29,11 +41,11 @@ namespace KnowledgeVault.WebAPI.Service
             }
             if (!string.IsNullOrEmpty(request.Author))
             {
-                query = query.Where(p => p.FirstAuthor.Contains(request.Author, StringComparison.InvariantCultureIgnoreCase));
+                query = query.Where(p => p.FirstAuthor.Contains(request.Author));
             }
             if (!string.IsNullOrEmpty(request.Correspond))
             {
-                query = query.Where(p => p.Correspond.Contains(request.Correspond, StringComparison.InvariantCultureIgnoreCase));
+                query = query.Where(p => p.Correspond.Contains(request.Correspond));
             }
             if (request.Type.HasValue)
             {
@@ -45,7 +57,7 @@ namespace KnowledgeVault.WebAPI.Service
             }
             if (!string.IsNullOrEmpty(request.Title))
             {
-                query = query.Where(p => p.Title.Contains(request.Title, StringComparison.InvariantCultureIgnoreCase));
+                query = query.Where(p => p.Title.Contains(request.Title));
             }
             if (!string.IsNullOrEmpty(request.SubType))
             {
@@ -121,6 +133,7 @@ namespace KnowledgeVault.WebAPI.Service
             }
             achievement.CreateTime = DateTime.Now;
             achievement.ModifiedTime = DateTime.Now;
+            achievement.IsDeleted = false;
             db.Achievements.Add(achievement);
             await db.SaveChangesAsync();
             return achievement.Id;
@@ -128,20 +141,21 @@ namespace KnowledgeVault.WebAPI.Service
 
         public async Task UpdateAsync(AchievementEntity achievement)
         {
-            var existed = db.Achievements.Find(achievement.Id);
+            var existed = await db.Achievements.FindAsync(achievement.Id);
             if (existed == null || existed.IsDeleted)
             {
                 throw new StatusBasedException($"找不到ID为{achievement.Id}的成果", System.Net.HttpStatusCode.NotFound);
             }
             achievement.ModifiedTime = DateTime.Now;
-            db.Achievements.Attach(achievement);
-            db.Entry(achievement).State = EntityState.Modified;
+            achievement.IsDeleted = false;
+            achievement.Adapt(existed);
+
             await db.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var entity = db.Achievements.Find(id) ?? throw new StatusBasedException($"找不到ID为{id}的成果", System.Net.HttpStatusCode.NotFound);
+            var entity = await db.Achievements.FindAsync(id) ?? throw new StatusBasedException($"找不到ID为{id}的成果", System.Net.HttpStatusCode.NotFound);
             entity.IsDeleted = true;
             entity.ModifiedTime = DateTime.Now;
             db.Entry(entity).State = EntityState.Modified;

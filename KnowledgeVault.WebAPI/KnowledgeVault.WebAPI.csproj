@@ -9,6 +9,7 @@
 
 
   <ItemGroup>
+    <PackageReference Include="Mapster" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
   </ItemGroup>

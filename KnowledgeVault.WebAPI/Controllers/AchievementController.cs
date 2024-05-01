@@ -30,6 +30,17 @@ namespace KnowledgeVault.WebAPI.Controllers
         }
 
         /// <summary>
+        /// 获取单个成果
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("{id}")]
+        public async Task<AchievementEntity> GetAllAsync(int id)
+        {
+            return await achievementService.GetAsync(id);
+        }
+
+        /// <summary>
         /// 插入新的成果
         /// </summary>
         /// <param name="achievement"></param>
@@ -57,7 +68,7 @@ namespace KnowledgeVault.WebAPI.Controllers
         /// </summary>
         /// <param name="id">成果ID</param>
         /// <returns></returns>
-        [HttpPost("Delete")]
+        [HttpPost("Delete/{id}")]
         public async Task<IActionResult> DeleteAsync(int id)
         {
             await achievementService.DeleteAsync(id);
