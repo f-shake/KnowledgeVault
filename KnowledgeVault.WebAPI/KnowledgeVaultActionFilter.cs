@@ -10,6 +10,7 @@ public class KnowledgeVaultActionFilter(IConfiguration config) : IActionFilter
 
     public void OnActionExecuting(ActionExecutingContext context)
     {
+#if !DEBUG
         var token = config["AppConfiguration:Token"];
         if (context.HttpContext.Request.Method is not ("GET" or "OPTION") && !string.IsNullOrEmpty(token))
         {
@@ -26,6 +27,7 @@ public class KnowledgeVaultActionFilter(IConfiguration config) : IActionFilter
                 context.Result = new UnauthorizedObjectResult("敏感操作，未登录");
             }
         }
+#endif
     }
 
     public void OnActionExecuted(ActionExecutedContext context)

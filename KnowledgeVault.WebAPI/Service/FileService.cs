@@ -1,6 +1,7 @@
 ﻿using KnowledgeVault.WebAPI.Dto;
 using KnowledgeVault.WebAPI.Entity;
 using System.IO.Compression;
+using System.Text;
 
 namespace KnowledgeVault.WebAPI.Service
 {
@@ -133,7 +134,8 @@ namespace KnowledgeVault.WebAPI.Service
             achievement.FileID = uploadDto.FileID;
             achievement.FileExtension = uploadDto.Extension;
 
-
+            achievement.CreateTime = DateTime.Now;
+            achievement.ModifiedTime = DateTime.Now;
             db.Achievements.Add(achievement);
             await db.SaveChangesAsync();
             return achievement;
@@ -149,7 +151,7 @@ namespace KnowledgeVault.WebAPI.Service
                 }
                 else
                 {
-                    throw new ArgumentException("年份格式不正确");
+                    throw new StatusBasedException("年份格式不正确", System.Net.HttpStatusCode.BadRequest);
                 }
             }
         }
@@ -170,23 +172,20 @@ namespace KnowledgeVault.WebAPI.Service
                 ImportedAchievements = new List<AchievementEntity>()
             };
 
-            // 创建一个临时目录来解压文件
             var tempDir = Path.Combine(baseDir, "temp_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempDir);
 
             try
             {
-                // 保存 zip 文件到临时目录
                 var zipPath = Path.Combine(tempDir, zipFile.FileName);
                 using (var stream = new FileStream(zipPath, FileMode.Create))
                 {
                     await zipFile.CopyToAsync(stream);
                 }
 
-                // 解压 zip 文件
-                ZipFile.ExtractToDirectory(zipPath, tempDir);
+                ZipFile.ExtractToDirectory(zipPath, tempDir, Encoding.GetEncoding("GBK"));
 
-                // 获取所有的 PDF 文件
+                File.Delete(zipPath);
                 var files = Directory.EnumerateFiles(tempDir);
 
                 foreach (var file in files)
@@ -202,7 +201,7 @@ namespace KnowledgeVault.WebAPI.Service
                         result.ImportedAchievements.Add(achievement);
                         result.SucceedFiles.Add(fileName);
                     }
-                    catch (StatusBasedException ex)
+                    catch (Exception ex)
                     {
                         result.FailedFiles.TryAdd(fileName, ex.Message);
                     }

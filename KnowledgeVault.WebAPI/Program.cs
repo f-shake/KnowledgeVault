@@ -1,10 +1,15 @@
 using KnowledgeVault.WebAPI;
 using KnowledgeVault.WebAPI.Service;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Text;
 
 string cors = "CorsPolicy";
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +76,20 @@ builder.Services.AddCors(policy =>
 
 });
 
+builder.Services.Configure<IISServerOptions>(p =>
+{
+    p.MaxRequestBodySize = int.MaxValue;
+});
+builder.Services.Configure<KestrelServerOptions>(p =>
+{
+    p.Limits.MaxRequestBodySize = int.MaxValue;
+});
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.ValueLengthLimit = int.MaxValue;
+    options.MultipartBodyLengthLimit = int.MaxValue; 
+    options.MultipartHeadersLengthLimit = int.MaxValue;
+});
 
 var app = builder.Build();
 serviceProvider = app.Services;
