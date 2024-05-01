@@ -9,37 +9,23 @@ using System.Threading.Tasks;
 
 namespace KnowledgeVault.WebAPI.Controllers
 {
-//    [ApiController]
-//    [Route("[controller]")]
-//    public class UserController(UserService userService) : KnowledgeVaultControllerBase
-//    {
-//        private readonly UserService userService = userService;
+    [ApiController]
+    [Route("[controller]")]
+    public class UserController(IConfiguration config) : KnowledgeVaultControllerBase
+    {
+        private readonly IConfiguration config = config;
 
-//        [HttpPost("Login")]
-//        public async Task<IActionResult> LoginAsync(AchievementEntity user)
-//        {
-//#if DEBUG
-//            var users = await userService.GetUsersAsync();
-//            if (users.Count == 0)
-//            {
-//                await userService.AddUserAsync("string", "string", "string");
-//            }
-//#endif
-//            var dbUser = await userService.GetUserAsync(user.Username);
-//            if (dbUser == null)
-//            {
-//                return Unauthorized("用户不存在");
-//            }
-//            if (dbUser.Password != user.Password)
-//            {
-//                return Unauthorized("用户名和密码不匹配");
-//            }
-//            if (user.GroupName != dbUser.GroupName)
-//            {
-//                await userService.UpdateGroupNameAsync(dbUser.Id, user.GroupName);
-//            }
-//            HttpContext.Session.SetInt32("user", dbUser.Id);
-//            return Ok();
-//        }
-//    }
+        /// <summary>
+        /// 测试管理员Token
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [HttpGet("{token}")]
+        public async Task<bool> CheckTokenAsync(string token)
+        {
+            var realToken = config["AppConfiguration:Token"];
+
+            return realToken == token;
+        }
+    }
 }
