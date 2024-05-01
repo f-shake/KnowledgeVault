@@ -57,21 +57,15 @@ namespace KnowledgeVault.WebAPI.Service
             }
             if (!string.IsNullOrEmpty(request.Title))
             {
-                query = query.Where(p => p.Title.Contains(request.Title));
+                query = query.Where(p => p.Title.ToLower().Contains(request.Title.ToLower()));
             }
             if (!string.IsNullOrEmpty(request.SubType))
             {
                 query = query.Where(p => p.SubType == request.SubType);
             }
 
+            //确认总数
             var totalCount = await query.CountAsync();
-
-            // 分页
-            if (request.PageIndex >= 0 && request.PageSize > 0)
-            {
-                query = query.Skip((request.PageIndex - 1) * request.PageSize)
-                             .Take(request.PageSize);
-            }
 
             // 排序
             Dictionary<string, Func<IQueryable<AchievementEntity>, IOrderedQueryable<AchievementEntity>>> sortMap;
@@ -87,7 +81,8 @@ namespace KnowledgeVault.WebAPI.Service
                     { nameof(AchievementEntity.Type).ToLower(), query => query.OrderBy(p => p.Type) },
                     { nameof(AchievementEntity.SubType).ToLower(), query => query.OrderBy(p => p.SubType) },
                     { nameof(AchievementEntity.Title).ToLower(), query => query.OrderBy(p => p.Title) },
-                    { nameof(AchievementEntity.Theme).ToLower(), query => query.OrderBy(p => p.Theme) }
+                    { nameof(AchievementEntity.Theme).ToLower(), query => query.OrderBy(p => p.Theme) },
+                    { nameof(AchievementEntity.Number).ToLower(), query => query.OrderBy(p => p.Number) }
                 };
             }
             else
@@ -102,13 +97,23 @@ namespace KnowledgeVault.WebAPI.Service
                     { nameof(AchievementEntity.Type).ToLower(), query => query.OrderByDescending(p => p.Type) },
                     { nameof(AchievementEntity.SubType).ToLower(), query => query.OrderByDescending(p => p.SubType) },
                     { nameof(AchievementEntity.Title).ToLower(), query => query.OrderByDescending(p => p.Title) },
-                    { nameof(AchievementEntity.Theme).ToLower(), query => query.OrderByDescending(p => p.Theme) }
+                    { nameof(AchievementEntity.Theme).ToLower(), query => query.OrderByDescending(p => p.Theme) },
+                    { nameof(AchievementEntity.Number).ToLower(), query => query.OrderByDescending(p => p.Number) }
                 };
             }
             if (request.SortField != null && sortMap.TryGetValue(request.SortField.ToLower(), out var sortFunc))
             {
                 query = sortFunc(query);
             }
+
+
+            // 分页
+            if (request.PageIndex >= 0 && request.PageSize > 0)
+            {
+                query = query.Skip((request.PageIndex - 1) * request.PageSize)
+                             .Take(request.PageSize);
+            }
+
 
             // 将查询结果转换为 PagedListDto 并返回
             var pagedListDto = new PagedListDto<AchievementEntity>
