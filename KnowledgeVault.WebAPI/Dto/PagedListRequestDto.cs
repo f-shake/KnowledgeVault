@@ -3,14 +3,14 @@
     public class PagedListRequestDto
     {
         /// <summary>
-        /// 页码索引
+        /// 页码索引，从1开始
         /// </summary>
-        public int PageIndex { get; set; } = 0;
+        public int PageIndex { get; set; } = 1;
 
         /// <summary>
         /// 每页条数
         /// </summary>
-        public int PageSize { get; set; } = 10;
+        public int PageSize { get; set; } = 100;
 
         /// <summary>
         /// 第一作者查询（模糊）

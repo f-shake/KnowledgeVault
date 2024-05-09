@@ -27,27 +27,6 @@ namespace KnowledgeVault.WebAPI.Controllers
         }
 
         /// <summary>
-        /// 上传文件，并根据文件名自动插入成果
-        /// </summary>
-        /// <returns></returns>
-        [HttpPost]
-        [Route("Import")]
-        public async Task<IActionResult> ImportAsync(IFormFile file)
-        {
-            return Ok(await fileService.ImportAsync(file, config["AppConfiguration:BaseDir"]));
-        }
-        /// <summary>
-        /// 批量上传文件，所有文件放置在一个ZIP中，并根据文件名自动插入成果
-        /// </summary>
-        /// <returns></returns>
-        [HttpPost]
-        [Route("ImportAll")]
-        public async Task<IActionResult> ImportAllAsync(IFormFile file)
-        {
-            return Ok(await fileService.ImportAllAsync(file, config["AppConfiguration:BaseDir"]));
-        }
-
-        /// <summary>
         /// 下载文件
         /// </summary>
         /// <param name="id">成果的FileID值</param>

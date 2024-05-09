@@ -17,6 +17,7 @@ builder.Services.AddDbContext<KnowledgeVaultDbContext>();
 builder.Services.AddTransient<AchievementService>();
 builder.Services.AddTransient<PropertyService>();
 builder.Services.AddTransient<FileService>();
+builder.Services.AddTransient<ArchiveService>();
 builder.Services.AddTransient<KnowledgeVaultActionFilter>();
 
 IServiceProvider serviceProvider = null;
