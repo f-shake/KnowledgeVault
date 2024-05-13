@@ -34,7 +34,9 @@ namespace KnowledgeVault.WebAPI.Controllers
         [Route("ExportTable")]
         public async Task<IActionResult> ExportTableAsync([FromQuery] PagedListRequestDto request)
         {
-            return Ok("还未实现");
+            var mimeType = "application/octet-stream";
+            var data = await archiveService.ExportTableAsync(request);
+            return File(data, mimeType, "成果表.csv");
         }
 
         /// <summary>

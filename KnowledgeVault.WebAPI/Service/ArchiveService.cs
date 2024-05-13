@@ -1,5 +1,8 @@
-﻿using KnowledgeVault.WebAPI.Dto;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using KnowledgeVault.WebAPI.Dto;
 using KnowledgeVault.WebAPI.Entity;
+using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 
@@ -7,8 +10,78 @@ namespace KnowledgeVault.WebAPI.Service
 {
     public class ArchiveService(KnowledgeVaultDbContext db, AchievementService achievementService, FileService fileService)
     {
-        private readonly KnowledgeVaultDbContext db = db;
         private readonly AchievementService achievementService = achievementService;
+        private readonly KnowledgeVaultDbContext db = db;
+        public async Task<byte[]> ExportTableAsync(PagedListRequestDto request)
+        {
+            request.PageSize = 0;
+            var data = await achievementService.GetAllAsync(request);
+            using var ms = new MemoryStream();
+            using TextWriter textWriter = new StreamWriter(ms, new UTF8Encoding(true));
+            using var csv = new CsvWriter(textWriter, CultureInfo.InvariantCulture);
+            csv.Context.RegisterClassMap<AchievementMap>();
+            csv.WriteRecords(data.Items);
+            return ms.ToArray();
+        }
+
+        public async Task<ImportResultDto> ImportAllAsync(IFormFile zipFile, string baseDir)
+        {
+            if (zipFile == null || zipFile.Length == 0)
+            {
+                throw new StatusBasedException("ZIP 文件为空", System.Net.HttpStatusCode.BadRequest);
+            }
+
+            var result = new ImportResultDto
+            {
+                SucceedFiles = new List<string>(),
+                FailedFiles = new Dictionary<string, string>(),
+                ImportedAchievements = new List<AchievementEntity>()
+            };
+
+            var tempDir = Path.Combine(baseDir, "temp_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+
+            try
+            {
+                var zipPath = Path.Combine(tempDir, zipFile.FileName);
+                using (var stream = new FileStream(zipPath, FileMode.Create))
+                {
+                    await zipFile.CopyToAsync(stream);
+                }
+
+                ZipFile.ExtractToDirectory(zipPath, tempDir, Encoding.GetEncoding("GBK"));
+
+                File.Delete(zipPath);
+                var files = Directory.EnumerateFiles(tempDir);
+
+                foreach (var file in files)
+                {
+                    using var fs = new FileStream(file, FileMode.Open);
+                    var fileName = Path.GetFileName(file);
+                    var formFile = new FormFile(fs, 0, fs.Length, file, fileName);
+
+                    try
+                    {
+                        // 调用 ImportAsync 处理每个 PDF 文件
+                        var achievement = await ImportAsync(formFile, baseDir);
+                        result.ImportedAchievements.Add(achievement);
+                        result.SucceedFiles.Add(fileName);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.FailedFiles.TryAdd(fileName, ex.Message);
+                    }
+                }
+
+                return result;
+            }
+            finally
+            {
+                // 删除临时目录及其内容
+                Directory.Delete(tempDir, true);
+            }
+        }
+
         public async Task<AchievementEntity> ImportAsync(IFormFile file, string baseDir)
         {
             if (file == null || file.Length == 0)
@@ -107,63 +180,32 @@ namespace KnowledgeVault.WebAPI.Service
                 }
             }
         }
-
-        public async Task<ImportResultDto> ImportAllAsync(IFormFile zipFile, string baseDir)
+        public class AchievementMap : ClassMap<AchievementEntity>
         {
-            if (zipFile == null || zipFile.Length == 0)
+            private static readonly Dictionary<int, string> typeNames = new Dictionary<int, string>()
             {
-                throw new StatusBasedException("ZIP 文件为空", System.Net.HttpStatusCode.BadRequest);
-            }
-
-            var result = new ImportResultDto
-            {
-                SucceedFiles = new List<string>(),
-                FailedFiles = new Dictionary<string, string>(),
-                ImportedAchievements = new List<AchievementEntity>()
+                [0] = "未知",
+                [1] = "论文",
+                [2] = "专利",
+                [3] = "软著",
+                [4] = "奖项",
+                [5] = "项目"
             };
-
-            var tempDir = Path.Combine(baseDir, "temp_" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(tempDir);
-
-            try
+            public AchievementMap()
             {
-                var zipPath = Path.Combine(tempDir, zipFile.FileName);
-                using (var stream = new FileStream(zipPath, FileMode.Create))
-                {
-                    await zipFile.CopyToAsync(stream);
-                }
-
-                ZipFile.ExtractToDirectory(zipPath, tempDir, Encoding.GetEncoding("GBK"));
-
-                File.Delete(zipPath);
-                var files = Directory.EnumerateFiles(tempDir);
-
-                foreach (var file in files)
-                {
-                    using var fs = new FileStream(file, FileMode.Open);
-                    var fileName = Path.GetFileName(file);
-                    var formFile = new FormFile(fs, 0, fs.Length, file, fileName);
-
-                    try
-                    {
-                        // 调用 ImportAsync 处理每个 PDF 文件
-                        var achievement = await ImportAsync(formFile, baseDir);
-                        result.ImportedAchievements.Add(achievement);
-                        result.SucceedFiles.Add(fileName);
-                    }
-                    catch (Exception ex)
-                    {
-                        result.FailedFiles.TryAdd(fileName, ex.Message);
-                    }
-                }
-
-                return result;
-            }
-            finally
-            {
-                // 删除临时目录及其内容
-                Directory.Delete(tempDir, true);
+                Map(m => m.Title).Name("名称");
+                Map(m => m.Year).Name("年份");
+                Map(m => m.Type).Name("类型").Convert(p => typeNames[p.Value.Type]);
+                Map(m => m.SubType).Name("子类型");
+                Map(m => m.FirstAuthor).Name("学生");
+                Map(m => m.FirstAuthor).Name("老师");
+                Map(m => m.AllAuthors).Name("所有作者");
+                Map(m => m.Journal).Name("期刊名");
+                Map(m => m.Number).Name("号码");
+                Map(m => m.Amount).Name("金额");
             }
         }
+
     }
+
 }
