@@ -1,14 +1,16 @@
 ﻿using KnowledgeVault.WebAPI.Dto;
+using KnowledgeVault.WebAPI.Entity;
 
 namespace KnowledgeVault.WebAPI.Service
 {
-    public class FileService(AchievementService achievementService)
+    public class FileService(AchievementService achievementService, IConfiguration configuration)
     {
         private readonly AchievementService achievementService = achievementService;
+        private readonly IConfiguration configuration = configuration;
 
-        public async Task<DownloadingFileDto> DownloadAsync(string id, string baseDir)
+        public async Task<DownloadingFileDto> DownloadAsync(string id)
         {
-            var filePath = Path.Combine(baseDir, id);
+            var filePath = Path.Combine(GetFilesDir(), id);
 
             if (!System.IO.File.Exists(filePath))
             {
@@ -18,7 +20,7 @@ namespace KnowledgeVault.WebAPI.Service
             string fileName;
             try
             {
-                fileName = await achievementService.GetFileNameAsync(id);
+                fileName = GetFileName(await achievementService.GetByFileIdAsync(id));
             }
             catch (KeyNotFoundException)
             {
@@ -32,7 +34,7 @@ namespace KnowledgeVault.WebAPI.Service
             };
         }
 
-        public async Task<UploadedFileDto> UploadAsync(IFormFile file, string baseDir)
+        public async Task<UploadedFileDto> UploadAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
             {
@@ -41,7 +43,7 @@ namespace KnowledgeVault.WebAPI.Service
 
             var id = Guid.NewGuid().ToString("N");
             var extension = Path.GetExtension(file.FileName);
-            var filePath = Path.Combine(baseDir, id);
+            var filePath = Path.Combine(GetFilesDir(), id);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
@@ -53,6 +55,22 @@ namespace KnowledgeVault.WebAPI.Service
                 FileID = id,
                 Extension = extension
             };
+        }
+
+        public string GetFileName(AchievementEntity achievement)
+        {
+            var template = configuration["ExportedFileName"];
+            return template
+                .Replace("{Year}", achievement.Year.ToString())
+                .Replace("{FirstAuthor}", achievement.FirstAuthor ?? "")
+                .Replace("{Correspond}", achievement.Correspond ?? "")
+                .Replace("{Title}", achievement.Title ?? "")
+                .Replace("--", "-") + achievement.FileExtension;
+        }
+
+        public string GetFilesDir()
+        {
+            return configuration["FilesDir"];
         }
     }
 }

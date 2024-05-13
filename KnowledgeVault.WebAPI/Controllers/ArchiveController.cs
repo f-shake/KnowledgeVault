@@ -1,6 +1,7 @@
 ﻿using KnowledgeVault.WebAPI.Dto;
 using KnowledgeVault.WebAPI.Service;
 using Microsoft.AspNetCore.Mvc;
+using System.IO.Compression;
 
 namespace KnowledgeVault.WebAPI.Controllers
 {
@@ -11,8 +12,15 @@ namespace KnowledgeVault.WebAPI.Controllers
     /// <param name="fileService"></param>
     [ApiController]
     [Route("Archive")]
-    public class ArchiveController(IConfiguration config, ArchiveService archiveService) : KnowledgeVaultControllerBase
+    public class ArchiveController(IConfiguration config,
+                                   ArchiveService archiveService,
+                                   FileService fileService,
+                                   AchievementService achievementService) : KnowledgeVaultControllerBase
     {
+        private readonly ArchiveService archiveService = archiveService;
+        private readonly FileService fileService = fileService;
+        private readonly AchievementService achievementService = achievementService;
+
         /// <summary>
         /// 导出请求的成果的文件压缩包
         /// </summary>
@@ -22,8 +30,11 @@ namespace KnowledgeVault.WebAPI.Controllers
         [Route("ExportFiles")]
         public async Task<IActionResult> ExportFilesAsync([FromQuery] PagedListRequestDto request)
         {
-            return Ok("还未实现");
+            MemoryStream ms = await archiveService.ExportFilesAsync(request);
+            var mimeType = "application/zip";
+            return File(ms, mimeType, "成果文件.zip");
         }
+
 
         /// <summary>
         /// 导出请求的成果的汇总表
@@ -47,7 +58,7 @@ namespace KnowledgeVault.WebAPI.Controllers
         [Route("ImportAll")]
         public async Task<IActionResult> ImportAllAsync(IFormFile file)
         {
-            return Ok(await archiveService.ImportAllAsync(file, config["FilesDir"]));
+            return Ok(await archiveService.ImportAllAsync(file));
         }
 
         /// <summary>
@@ -58,7 +69,7 @@ namespace KnowledgeVault.WebAPI.Controllers
         [Route("Import")]
         public async Task<IActionResult> ImportAsync(IFormFile file)
         {
-            return Ok(await archiveService.ImportAsync(file, config["FilesDir"]));
+            return Ok(await archiveService.ImportAsync(file));
         }
     }
 

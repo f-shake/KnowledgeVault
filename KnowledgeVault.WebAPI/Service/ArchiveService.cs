@@ -24,7 +24,32 @@ namespace KnowledgeVault.WebAPI.Service
             return ms.ToArray();
         }
 
-        public async Task<ImportResultDto> ImportAllAsync(IFormFile zipFile, string baseDir)
+        public async Task<MemoryStream> ExportFilesAsync(PagedListRequestDto request)
+        {
+            var achievements = (await achievementService.GetAllAsync(request)).Items;
+            MemoryStream ms = new MemoryStream();
+            using (ZipArchive zip = new ZipArchive(ms, ZipArchiveMode.Create, true))
+            {
+                foreach (var a in achievements)
+                {
+                    if (a.FileID == null)
+                    {
+                        continue;
+                    }
+                    var diskFileName = Path.Combine(fileService.GetFilesDir(), a.FileID);
+                    if (!File.Exists(diskFileName))
+                    {
+                        continue;
+                    }
+                    string zipFileName = fileService.GetFileName(a);
+                    zip.CreateEntryFromFile(diskFileName, zipFileName);
+                }
+            }
+            ms.Seek(0, SeekOrigin.Begin);
+            return ms;
+        }
+
+        public async Task<ImportResultDto> ImportAllAsync(IFormFile zipFile)
         {
             if (zipFile == null || zipFile.Length == 0)
             {
@@ -38,7 +63,7 @@ namespace KnowledgeVault.WebAPI.Service
                 ImportedAchievements = new List<AchievementEntity>()
             };
 
-            var tempDir = Path.Combine(baseDir, "temp_" + Guid.NewGuid().ToString("N"));
+            var tempDir = Path.Combine(fileService.GetFilesDir(), "temp_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempDir);
 
             try
@@ -63,7 +88,7 @@ namespace KnowledgeVault.WebAPI.Service
                     try
                     {
                         // 调用 ImportAsync 处理每个 PDF 文件
-                        var achievement = await ImportAsync(formFile, baseDir);
+                        var achievement = await ImportAsync(formFile);
                         result.ImportedAchievements.Add(achievement);
                         result.SucceedFiles.Add(fileName);
                     }
@@ -82,7 +107,7 @@ namespace KnowledgeVault.WebAPI.Service
             }
         }
 
-        public async Task<AchievementEntity> ImportAsync(IFormFile file, string baseDir)
+        public async Task<AchievementEntity> ImportAsync(IFormFile file )
         {
             if (file == null || file.Length == 0)
             {
@@ -154,7 +179,7 @@ namespace KnowledgeVault.WebAPI.Service
                 throw new StatusBasedException("已存在相同成果", System.Net.HttpStatusCode.Conflict);
             }
 
-            var uploadDto = await fileService.UploadAsync(file, baseDir);
+            var uploadDto = await fileService.UploadAsync(file);
 
             achievement.FileID = uploadDto.FileID;
             achievement.FileExtension = uploadDto.Extension;

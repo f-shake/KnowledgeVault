@@ -14,10 +14,10 @@ namespace KnowledgeVault.WebAPI.Service
 {
     public class AchievementService(KnowledgeVaultDbContext db)
     {
-        public async Task<string> GetFileNameAsync(string fileID)
+        public async Task<AchievementEntity> GetByFileIdAsync(string fileID)
         {
             var entity = await db.Achievements.Where(p => p.FileID == fileID).FirstOrDefaultAsync() ?? throw new KeyNotFoundException();
-            return $"{entity.FirstAuthor} {entity.Title}{entity.FileExtension}";
+            return entity;
         }
 
         public async Task<AchievementEntity> GetAsync(int id)
