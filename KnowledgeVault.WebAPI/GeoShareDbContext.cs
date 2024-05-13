@@ -13,21 +13,16 @@ namespace KnowledgeVault.WebAPI
 {
     public class KnowledgeVaultDbContext : DbContext
     {
-
-        private static readonly string connectionString = "Data Source=KnowledgeVault.db";
-
-        public KnowledgeVaultDbContext()
+        public KnowledgeVaultDbContext(DbContextOptions<KnowledgeVaultDbContext> options) : base(options)
+        {
+            Database.EnsureCreated();
+        }
+        private KnowledgeVaultDbContext()
         {
             Database.EnsureCreated();
         }
 
         public DbSet<AchievementEntity> Achievements { get; set; }
-
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlite(connectionString);
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

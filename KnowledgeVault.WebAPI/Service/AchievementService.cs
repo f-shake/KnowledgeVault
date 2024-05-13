@@ -105,7 +105,17 @@ namespace KnowledgeVault.WebAPI.Service
             {
                 query = sortFunc(query);
             }
-
+            else
+            {
+                if (request.SortOrder)
+                {
+                    query = query.OrderBy(p => p.ModifiedTime);
+                }
+                else
+                {
+                    query = query.OrderByDescending(p => p.ModifiedTime);
+                }
+            }
 
             // 分页
             if (request.PageIndex >= 0 && request.PageSize > 0)

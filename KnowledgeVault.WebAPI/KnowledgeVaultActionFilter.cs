@@ -11,7 +11,7 @@ public class KnowledgeVaultActionFilter(IConfiguration config) : IActionFilter
     public void OnActionExecuting(ActionExecutingContext context)
     {
 #if !DEBUG
-        var token = config["AppConfiguration:Token"];
+        var token = config["Token"];
         if (context.HttpContext.Request.Method is not ("GET" or "OPTION") && !string.IsNullOrEmpty(token))
         {
             var headers = context.HttpContext.Request.Headers;

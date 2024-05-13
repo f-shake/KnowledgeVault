@@ -45,7 +45,7 @@ namespace KnowledgeVault.WebAPI.Controllers
         [Route("ImportAll")]
         public async Task<IActionResult> ImportAllAsync(IFormFile file)
         {
-            return Ok(await archiveService.ImportAllAsync(file, config["AppConfiguration:BaseDir"]));
+            return Ok(await archiveService.ImportAllAsync(file, config["FilesDir"]));
         }
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace KnowledgeVault.WebAPI.Controllers
         [Route("Import")]
         public async Task<IActionResult> ImportAsync(IFormFile file)
         {
-            return Ok(await archiveService.ImportAsync(file, config["AppConfiguration:BaseDir"]));
+            return Ok(await archiveService.ImportAsync(file, config["FilesDir"]));
         }
     }
 

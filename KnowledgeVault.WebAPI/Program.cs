@@ -2,6 +2,7 @@ using KnowledgeVault.WebAPI;
 using KnowledgeVault.WebAPI.Service;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -13,7 +14,10 @@ Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<KnowledgeVaultDbContext>();
+builder.Services.AddDbContext<KnowledgeVaultDbContext>(o =>
+{
+    o.UseSqlite(builder.Configuration.GetConnectionString("Default"));
+});
 builder.Services.AddTransient<AchievementService>();
 builder.Services.AddTransient<PropertyService>();
 builder.Services.AddTransient<FileService>();

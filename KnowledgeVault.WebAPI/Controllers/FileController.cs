@@ -23,7 +23,7 @@ namespace KnowledgeVault.WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> UploadAsync(IFormFile file)
         {
-            return Ok(await fileService.UploadAsync(file, config["AppConfiguration:BaseDir"]));
+            return Ok(await fileService.UploadAsync(file, config["FilesDir"]));
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace KnowledgeVault.WebAPI.Controllers
         public async Task<IActionResult> DownloadAsync(string id)
         {
             var mimeType = "application/octet-stream";
-            var file = await fileService.DownloadAsync(id, config["AppConfiguration:BaseDir"]);
+            var file = await fileService.DownloadAsync(id, config["FilesDir"]);
             var stream = System.IO.File.OpenRead(file.DiskFilePath);
             return File(stream, mimeType, file.FileName);
         }

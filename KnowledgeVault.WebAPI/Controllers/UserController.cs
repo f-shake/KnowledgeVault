@@ -23,7 +23,7 @@ namespace KnowledgeVault.WebAPI.Controllers
         [HttpGet("{token}")]
         public async Task<bool> CheckTokenAsync(string token)
         {
-            var realToken = config["AppConfiguration:Token"];
+            var realToken = config["Token"];
 
             return realToken == token;
         }
