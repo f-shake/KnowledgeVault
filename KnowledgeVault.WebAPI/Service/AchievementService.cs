@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace KnowledgeVault.WebAPI.Service
 {
-    public class AchievementService(KnowledgeVaultDbContext db)
+    public class AchievementService(AppDbContext db)
     {
         public async Task<AchievementEntity> GetByFileIdAsync(string fileID)
         {

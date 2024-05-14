@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace KnowledgeVault.WebAPI.Service
 {
-    public class PropertyService(KnowledgeVaultDbContext db)
+    public class PropertyService(AppDbContext db)
     {
         public Task<List<string>> GetFirstAuthorsAsync()
         {

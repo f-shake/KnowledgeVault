@@ -2,16 +2,19 @@
 using CsvHelper.Configuration;
 using KnowledgeVault.WebAPI.Dto;
 using KnowledgeVault.WebAPI.Entity;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 
 namespace KnowledgeVault.WebAPI.Service
 {
-    public class ArchiveService(KnowledgeVaultDbContext db, AchievementService achievementService, FileService fileService)
+    public class ArchiveService(AppDbContext db, AchievementService achievementService, FileService fileService, IConfiguration configuration)
     {
         private readonly AchievementService achievementService = achievementService;
-        private readonly KnowledgeVaultDbContext db = db;
+        private readonly IConfiguration configuration = configuration;
+        private readonly AppDbContext db = db;
         public async Task<byte[]> ExportTableAsync(PagedListRequestDto request)
         {
             request.PageSize = 0;
@@ -24,11 +27,47 @@ namespace KnowledgeVault.WebAPI.Service
             return ms.ToArray();
         }
 
-        public async Task<MemoryStream> ExportFilesAsync(PagedListRequestDto request)
+        public async Task<string> ExportBackupAsync()
         {
+            var tempDir = fileService.GetTempFilesDir();
+            var filesDir = fileService.GetFilesDir();
+            var tempDb = Path.Combine(tempDir, "db.sqlite");
+            if (File.Exists(tempDb))
+            {
+                File.Delete(tempDb);
+            }
+            await using (var source = new SqliteConnection(configuration.GetConnectionString("Default")))
+            {
+                await using var destination = new SqliteConnection($"Data Source={tempDb}");
+                await source.OpenAsync();
+                await destination.OpenAsync();
+                source.BackupDatabase(destination);
+            }
+            SqliteConnection.ClearAllPools(); //不然文件锁还在
+
+
+            var tempZipName = Path.Combine(tempDir, Guid.NewGuid().ToString("N") + ".zip");
+
+            using var fs = File.Create(tempZipName);
+            using (ZipArchive zip = new ZipArchive(fs, ZipArchiveMode.Create, true))
+            {
+                zip.CreateEntryFromFile(tempDb, "db.sqlite");
+                foreach (var file in Directory.EnumerateFiles(filesDir))
+                {
+                    zip.CreateEntryFromFile(file, Path.GetFileName(file));
+                }
+            }
+            await fs.DisposeAsync();
+
+            return tempZipName;
+        }
+        public async Task<string> ExportFilesAsync(PagedListRequestDto request)
+        {
+            var tempDir = fileService.GetTempFilesDir();
+            var tempZipName = Path.Combine(tempDir, Guid.NewGuid().ToString("N") + ".zip");
             var achievements = (await achievementService.GetAllAsync(request)).Items;
-            MemoryStream ms = new MemoryStream();
-            using (ZipArchive zip = new ZipArchive(ms, ZipArchiveMode.Create, true))
+            using var fs = File.Create(tempZipName);
+            using (ZipArchive zip = new ZipArchive(fs, ZipArchiveMode.Create, true))
             {
                 foreach (var a in achievements)
                 {
@@ -45,8 +84,8 @@ namespace KnowledgeVault.WebAPI.Service
                     zip.CreateEntryFromFile(diskFileName, zipFileName);
                 }
             }
-            ms.Seek(0, SeekOrigin.Begin);
-            return ms;
+            await fs.DisposeAsync();
+            return tempZipName;
         }
 
         public async Task<ImportResultDto> ImportAllAsync(IFormFile zipFile)
@@ -107,7 +146,7 @@ namespace KnowledgeVault.WebAPI.Service
             }
         }
 
-        public async Task<AchievementEntity> ImportAsync(IFormFile file )
+        public async Task<AchievementEntity> ImportAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
             {

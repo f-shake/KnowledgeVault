@@ -30,11 +30,51 @@ namespace KnowledgeVault.WebAPI.Controllers
         [Route("ExportFiles")]
         public async Task<IActionResult> ExportFilesAsync([FromQuery] PagedListRequestDto request)
         {
-            MemoryStream ms = await archiveService.ExportFilesAsync(request);
-            var mimeType = "application/zip";
-            return File(ms, mimeType, "成果文件.zip");
+            if (isArchiving)
+            {
+                throw new StatusBasedException("存在正在执行的打包任务", System.Net.HttpStatusCode.BadRequest);
+            }
+            isArchiving = true;
+            try
+            {
+                var file = await archiveService.ExportFilesAsync(request);
+                var mimeType = "application/zip";
+                return PhysicalFile(file, mimeType, "成果文件.zip");
+            }
+            finally
+            {
+                isArchiving = false;
+            }
         }
 
+        /// <summary>
+        /// 导出所有数据用于备份
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("ExportBackup")]
+        public async Task<IActionResult> ExportBackupAsync()
+        {
+            if (isArchiving)
+            {
+                throw new StatusBasedException("存在正在执行的打包任务", System.Net.HttpStatusCode.BadRequest);
+            }
+            isArchiving = true;
+            try
+            {
+                var file = await archiveService.ExportBackupAsync();
+                var mimeType = "application/zip";
+                return PhysicalFile(file, mimeType, "成果备份.zip");
+            }
+            finally
+            {
+                isArchiving = false;
+            }
+        }
+
+
+        private static bool isArchiving = false;
 
         /// <summary>
         /// 导出请求的成果的汇总表

@@ -70,7 +70,22 @@ namespace KnowledgeVault.WebAPI.Service
 
         public string GetFilesDir()
         {
-            return configuration["FilesDir"];
+            var filesDir = configuration["FilesDir"] ?? throw new ArgumentNullException("FilesDir");
+            if (!Directory.Exists(filesDir))
+            {
+                Directory.CreateDirectory(filesDir);
+            }
+            return filesDir;
+        }
+
+        public string GetTempFilesDir()
+        {
+            var tempFilesDir = configuration["TempFilesDir"] ?? throw new ArgumentNullException("TempFilesDir");
+            if (!Directory.Exists(tempFilesDir))
+            {
+                Directory.CreateDirectory(tempFilesDir);
+            }
+            return tempFilesDir;
         }
     }
 }

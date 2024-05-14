@@ -14,7 +14,7 @@ Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<KnowledgeVaultDbContext>(o =>
+builder.Services.AddDbContext<AppDbContext>(o =>
 {
     o.UseSqlite(builder.Configuration.GetConnectionString("Default"));
 });

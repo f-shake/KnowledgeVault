@@ -11,23 +11,21 @@ using System.Threading.Tasks;
 
 namespace KnowledgeVault.WebAPI
 {
-    public class KnowledgeVaultDbContext : DbContext
+    public class AppDbContext : DbContext
     {
-        public KnowledgeVaultDbContext(DbContextOptions<KnowledgeVaultDbContext> options) : base(options)
+        private readonly string connectionString;
+
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
             Database.EnsureCreated();
         }
-        private KnowledgeVaultDbContext()
+
+        protected AppDbContext()
         {
             Database.EnsureCreated();
         }
 
         public DbSet<AchievementEntity> Achievements { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-        }
 
     }
 }
