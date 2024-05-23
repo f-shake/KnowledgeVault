@@ -27,7 +27,7 @@ namespace KnowledgeVault.WebAPI.Service
             return ms.ToArray();
         }
 
-        public async Task<string> ExportBackupAsync()
+        public async Task<string> MakeBackupAsync()
         {
             var tempDir = fileService.GetTempFilesDir();
             var filesDir = fileService.GetFilesDir();
@@ -46,7 +46,7 @@ namespace KnowledgeVault.WebAPI.Service
             SqliteConnection.ClearAllPools(); //不然文件锁还在
 
 
-            var tempZipName = Path.Combine(tempDir, Guid.NewGuid().ToString("N") + ".zip");
+            var tempZipName = Path.Combine(tempDir, DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".zip");
 
             using var fs = File.Create(tempZipName);
             using (ZipArchive zip = new ZipArchive(fs, ZipArchiveMode.Create, true))
@@ -61,6 +61,7 @@ namespace KnowledgeVault.WebAPI.Service
 
             return tempZipName;
         }
+
         public async Task<string> ExportFilesAsync(PagedListRequestDto request)
         {
             var tempDir = fileService.GetTempFilesDir();

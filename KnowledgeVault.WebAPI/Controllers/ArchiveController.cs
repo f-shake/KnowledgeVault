@@ -50,11 +50,11 @@ namespace KnowledgeVault.WebAPI.Controllers
         /// <summary>
         /// 导出所有数据用于备份
         /// </summary>
-        /// <param name="request"></param>
         /// <returns></returns>
+        /// <exception cref="StatusBasedException"></exception>
         [HttpGet]
-        [Route("ExportBackup")]
-        public async Task<IActionResult> ExportBackupAsync()
+        [Route("DownloadLastBackup")]
+        public async Task<IActionResult> DownloadLastBackup()
         {
             if (isArchiving)
             {
@@ -63,9 +63,39 @@ namespace KnowledgeVault.WebAPI.Controllers
             isArchiving = true;
             try
             {
-                var file = await archiveService.ExportBackupAsync();
+                var tempDir = fileService.GetTempFilesDir();
+                var lastFile = Directory.EnumerateFiles(tempDir, "*.zip")
+                    .OrderByDescending(p => p)
+                    .FirstOrDefault()
+                    ?? throw new StatusBasedException("不存在任何备份文件", System.Net.HttpStatusCode.NotFound);
                 var mimeType = "application/zip";
-                return PhysicalFile(file, mimeType, "成果备份.zip");
+                var file = System.IO.File.OpenRead(lastFile);
+                return File(file, mimeType, "成果备份.zip");
+            }
+            finally
+            {
+                isArchiving = false;
+            }
+        }
+
+        /// <summary>
+        /// 制作一个备份文件
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="StatusBasedException"></exception>
+        [HttpGet]
+        [Route("MakeBackup")]
+        public async Task<IActionResult> MakeBackupAsync()
+        {
+            if (isArchiving)
+            {
+                throw new StatusBasedException("存在正在执行的打包任务", System.Net.HttpStatusCode.BadRequest);
+            }
+            isArchiving = true;
+            try
+            {
+                var file = await archiveService.MakeBackupAsync();
+                return Ok(Path.GetFileName(file));
             }
             finally
             {
