@@ -39,6 +39,33 @@ namespace KnowledgeVault.WebAPI.Controllers
             var stream = System.IO.File.OpenRead(file.DiskFilePath);
             return File(stream, mimeType, file.FileName);
         }
+
+        /// <summary>
+        /// 寻找不再使用的文件
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="StatusBasedException"></exception>
+        [HttpGet]
+        [Route("FindUnusedFiles")]
+        public async Task<IActionResult> FindUnusedFiles()
+        {
+            var files = await fileService.FindUnusedFiles();
+            return Ok(files);
+        }
+
+        /// <summary>
+        /// 寻找不再使用的文件并删除
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="StatusBasedException"></exception>
+        [HttpPost]
+        [Route("DeleteUnusedFiles")]
+        public async Task<IActionResult> DeleteUnusedFiles()
+        {
+            var files = await fileService.DeleteUnusedFiles();
+            return Ok(files);
+        }
+
     }
 
 }

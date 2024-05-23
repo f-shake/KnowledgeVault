@@ -3,10 +3,36 @@ using KnowledgeVault.WebAPI.Entity;
 
 namespace KnowledgeVault.WebAPI.Service
 {
-    public class FileService(AchievementService achievementService, IConfiguration configuration)
+    public class FileService(AppDbContext db, AchievementService achievementService, IConfiguration configuration)
     {
         private readonly AchievementService achievementService = achievementService;
         private readonly IConfiguration configuration = configuration;
+
+        public async Task<IList<string>> DeleteUnusedFiles()
+        {
+            var files = await FindUnusedFiles();
+            var fileDir = GetFilesDir();
+            foreach (var file in files)
+            {
+                File.Delete(Path.Combine(fileDir, file));
+            }
+            return files;
+        }
+        public async Task<IList<string>> FindUnusedFiles()
+        {
+            var files = Directory.EnumerateFiles(GetFilesDir())
+                .Select(Path.GetFileName)
+                .ToList();
+
+            var dbFileIDs = db.Achievements
+                .Select(p => p.FileID)
+                .ToHashSet();
+
+            var unusedFiles = files
+                .Except(dbFileIDs)
+                .ToList();
+            return unusedFiles;
+        }
 
         public async Task<DownloadingFileDto> DownloadAsync(string id)
         {

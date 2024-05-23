@@ -83,7 +83,7 @@ namespace KnowledgeVault.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         /// <exception cref="StatusBasedException"></exception>
-        [HttpGet]
+        [HttpPost]
         [Route("MakeBackup")]
         public async Task<IActionResult> MakeBackupAsync()
         {
@@ -102,7 +102,6 @@ namespace KnowledgeVault.WebAPI.Controllers
                 isArchiving = false;
             }
         }
-
 
         private static bool isArchiving = false;
 
