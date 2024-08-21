@@ -1,0 +1,9 @@
+/* global.css */
+
+/* 表格详情中标题字体样式 */
+.description {
+    font-weight: 800;
+    cursor: default; /* 默认光标 */
+    user-select: none; /* 防止用户选择文本 */
+    margin-right: 10px;
+  }
