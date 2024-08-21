@@ -21,6 +21,18 @@
                     <el-form-item>
                         <el-button type="primary" @click="getPaper(data)">查询</el-button>
                         <el-button @click="resetSelectForm(data)">重置</el-button>
+                        <el-button @click="getExport(data)" v-if="dataAll.identityID">导出</el-button>
+                        <!-- <el-dropdown style="margin-left:12px" @command="addData">
+                            <el-button type="primary">导出
+                                <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                            </el-button>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item command="create">创建导出任务</el-dropdown-item>
+                                    <el-dropdown-item command="create">下载最后一次</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown> -->
                     </el-form-item>
                 </el-form>
             </div>
@@ -166,6 +178,7 @@ import {
     downloadItem,
     deleteItem,
     getPaper,
+    getExport,
     resetSelectForm,
     addDataDraw,
     editItemDraw,
@@ -175,7 +188,6 @@ import {
     identityDeter,
     indexMethod
 } from '@/utils/commonFunctions';   // 引入公共方法
-
 
 
 
@@ -236,7 +248,8 @@ export default defineComponent({
             editItemDraw,
             sortTableFun,
             indexMethod,
-            addData
+            addData,
+            getExport,
         }
     },
     components: {

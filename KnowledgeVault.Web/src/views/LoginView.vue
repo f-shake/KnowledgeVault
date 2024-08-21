@@ -64,6 +64,7 @@ export default defineComponent({
         }
 
         const jumpToHome = () => {
+            Cookies.remove("token")
             router.push('/all')
         }
         return { jumpToHome, adminShow, ...toRefs(data), submit, ruleFormRef }

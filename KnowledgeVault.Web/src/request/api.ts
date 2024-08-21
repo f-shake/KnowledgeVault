@@ -28,6 +28,15 @@ export function getPaperList(params: any) {
     })
 }
 
+// 获取论文列表
+export function exportTable(params: any) {
+    return instance({
+        url: "/Archive/ExportTable",
+        method: "GET",
+        params
+    })
+}
+
 
 
 // 插入数据

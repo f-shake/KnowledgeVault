@@ -1,4 +1,4 @@
-import { getPaperList, deleteItemApi } from '@/request/api'
+import { getPaperList, deleteItemApi, exportTable } from '@/request/api'
 import { ElMessage } from 'element-plus'
 import { ElMessageBox } from 'element-plus'
 import bus from '@/utils/bus'
@@ -16,6 +16,26 @@ export const getPaper = (data: any) => {
     console.log(error)
   })
 }
+function toQueryString(obj) {
+  return Object.keys(obj)
+      .filter(key => obj[key] !== null && obj[key] !== '') // 过滤掉值为 null 或空字符串的键
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}`)
+      .join('&');
+}
+
+
+export const getExport = (data: any) => {
+  const url = baseUrl + '/Archive/ExportTable?'+toQueryString(data.itemSelect);
+  // 使用 window.open() 方法打开文件下载链接
+  window.open(url, '_blank');
+  // window.open(url, '_blank');(data.itemSelect)
+  // exportTable(data.itemSelect).then((res: any) => {
+  //   data.paperData = res.items; // 论文展示数据
+  //   data.totalCount = res.totalCount// 获取成果总数
+  // }).catch((error: any) => {
+  //   console.log(error)
+  // })
+}
 
 // 重置请求参数
 export const resetQueryList = (itemSelect: any) => {
@@ -32,7 +52,7 @@ export const resetQueryList = (itemSelect: any) => {
 
 // 下载文件
 export const downloadItem = (row: any) => {
-  const url = baseUrl+'/File/' + row.fileID
+  const url = baseUrl + '/File/' + row.fileID
   // 使用 window.open() 方法打开文件下载链接
   window.open(url, '_blank');
 }
@@ -64,7 +84,7 @@ export const deleteItem = (id: number, data: any) => {
 // 点击添加成果方法 -- 目的打开弹出框
 export const addDataDraw = (dataAll: any) => {
   console.log(dataAll);
-  
+
   // 未选中成果类型弹出警告信息
   if (!dataAll.selectType) {
     ElMessage({
