@@ -51,7 +51,7 @@ export default defineComponent({
         const submit = () => {
             verifyIdentity(data.ruleForm.password).then((res: any) => {
                 if (res === true) {   // 登陆成功
-                    Cookies.set("token", data.ruleForm.password)
+                    Cookies.set("token", data.ruleForm.password, { expires: 7 })
                     router.push("/all")
                     console.log('登录成功!')
                 } else { // 登陆失败

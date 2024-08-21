@@ -30,7 +30,7 @@
                     <el-form-item>
                         <el-dropdown @command="addData">
                             <el-button type="primary">添加成果
-                                <!-- <el-icon class="el-icon--right"><arrow-down /></el-icon> -->
+                                <el-icon class="el-icon--right"><arrow-down /></el-icon>
                             </el-button>
                             <template #dropdown>
                                 <el-dropdown-menu>
