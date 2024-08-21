@@ -3,6 +3,9 @@ import { ElMessage } from 'element-plus'
 import { ElMessageBox } from 'element-plus'
 import bus from '@/utils/bus'
 import instance from '@/request'
+import Cookies from 'js-cookie'
+import baseUrl from '../request/url'
+
 
 // 获取论文列表
 export const getPaper = (data: any) => {
@@ -29,7 +32,7 @@ export const resetQueryList = (itemSelect: any) => {
 
 // 下载文件
 export const downloadItem = (row: any) => {
-  const url = 'http://autodotua.top:12336/api/File/' + row.fileID
+  const url = baseUrl+'/File/' + row.fileID
   // 使用 window.open() 方法打开文件下载链接
   window.open(url, '_blank');
 }
@@ -60,6 +63,8 @@ export const deleteItem = (id: number, data: any) => {
 
 // 点击添加成果方法 -- 目的打开弹出框
 export const addDataDraw = (dataAll: any) => {
+  console.log(dataAll);
+  
   // 未选中成果类型弹出警告信息
   if (!dataAll.selectType) {
     ElMessage({
@@ -124,7 +129,7 @@ export const handleClose = (done: () => void) => {
 
 
 // Element 表格后端排序
-export const sortTableFun = (column: any, data:any) => {
+export const sortTableFun = (column: any, data: any) => {
   data.itemSelect.SortField = column.prop;    // 排序字段
   if (column.order === "ascending") {   // 正序
     data.itemSelect.SortOrder = true
@@ -140,12 +145,12 @@ export const sortTableFun = (column: any, data:any) => {
 
 // 判断身份状态是 管理员 还是 游客
 export const identityDeter = (dataAll: any) => {
-  dataAll.identityID = localStorage.NbuAchievementManagementSystemAdministrator && localStorage.NbuAchievementManagementSystemAdministrator === "admin" ? true : false
+  dataAll.identityID = Cookies.get("token") != null
 }
 
 // 自定义索引
 export const indexMethod = (page: number | undefined, pageSize: number | undefined) => {
-  if (page && pageSize){
+  if (page && pageSize) {
     return (page - 1) * pageSize + 1
   }
 }

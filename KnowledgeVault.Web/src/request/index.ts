@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
-
-const baseUrl = 'http://autodotua.top:12336/api';
+import baseUrl from './url'
+import Cookies from 'js-cookie'
 
 // 创建instance实例
 const instance = axios.create({
@@ -15,8 +15,10 @@ const instance = axios.create({
 
 // 请求拦截
 instance.interceptors.request.use((config) => {
-    if(localStorage.NbuAchievementManagementSystemAdministrator && localStorage.NbuAchievementManagementSystemAdministrator){
-        config.headers.Authorization = "123456"
+    const token=Cookies.get("token")
+    console.log(token)
+    if(token){
+        config.headers.Authorization = token
     }
     return config
 })

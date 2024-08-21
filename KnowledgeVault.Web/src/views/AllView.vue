@@ -28,12 +28,22 @@
             <div class="add" v-if="dataAll.identityID">
                 <el-form :inline="true" class="demo-form-inline">
                     <el-form-item>
-                        <el-button type="primary" @click="addDataDraw(dataAll)">添加成果</el-button>
+                        <el-dropdown @command="addData">
+                            <el-button type="primary">添加成果
+                                <!-- <el-icon class="el-icon--right"><arrow-down /></el-icon> -->
+                            </el-button>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item v-for="item in options" :key="item.value"
+                                        :command="item.value">{{ item.label }}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
                     </el-form-item>
                 </el-form>
-                <el-select v-model="selectType" placeholder="请选择成果类型" style="width: 160px; margin-right: 20px;">
+                <!-- <el-select v-model="selectType" placeholder="请选择成果类型" style="width: 160px; margin-right: 20px;">
                     <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
-                </el-select>
+                </el-select> -->
             </div>
         </div>
         <!-- --------------分页-------------- -->
@@ -61,7 +71,7 @@
                         <p m="t-0 b-2"><span class="description">论文类型:</span> {{ props.row.subType }}</p>
                         <p m="t-0 b-2">
                             <span class="description" v-if="props.row.subType == '期刊论文'">期刊名称:</span>
-                            <span class="description" v-else-if="props.row.subType == '学位论文'">学位:</span> 
+                            <span class="description" v-else-if="props.row.subType == '学位论文'">学位:</span>
                             {{ props.row.journal }}
                         </p>
                         <p m="t-0 b-2"><span class="description">负责老师:</span> {{ props.row.correspond }}</p>
@@ -110,17 +120,17 @@
                         <p m="t-0 b-2"><span class="description">金额（万元):</span> {{ props.row.amount }}</p>
                         <p m="t-0 b-2"><span class="description">获批年份:</span> {{ props.row.year }}</p>
                         <p m="t-0 b-2"><span class="description">执行日期:</span> {{ props.row.executionTime }}</p>
-                        <p m="t-0 b-2"><span class="description">项目号:</span> {{ props.row.number }}</p> 
-                        <p m="t-0 b-2"><span class="description">备注  :</span> {{ props.row.theme }}</p>
+                        <p m="t-0 b-2"><span class="description">项目号:</span> {{ props.row.number }}</p>
+                        <p m="t-0 b-2"><span class="description">备注 :</span> {{ props.row.theme }}</p>
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="ID" type="index" 
-            :index="indexMethod(itemSelect.PageIndex, itemSelect.PageSize)" width="60" />
+            <el-table-column label="ID" type="index" :index="indexMethod(itemSelect.PageIndex, itemSelect.PageSize)"
+                width="60" />
             <el-table-column label="名称" prop="title" min-width="200" />
             <el-table-column sortable="custom" label="类别" prop="type" width="120px">
                 <template #default="scope">
-                    <el-tag type="primary">{{ options.filter(item => item.value === scope.row.type)[0].label }}</el-tag>     
+                    <el-tag type="primary">{{ options.filter(item => item.value === scope.row.type)[0].label }}</el-tag>
                 </template>
             </el-table-column>
             <el-table-column sortable="custom" label="老师" prop="correspond" />
@@ -204,6 +214,10 @@ export default defineComponent({
             dataAll.drawer = status
         }
 
+        const addData = (command:  number) => {
+            dataAll.selectType = command;
+            addDataDraw(dataAll);
+        }
 
         return {
             data,
@@ -221,7 +235,8 @@ export default defineComponent({
             resetSelectForm,
             editItemDraw,
             sortTableFun,
-            indexMethod
+            indexMethod,
+            addData
         }
     },
     components: {

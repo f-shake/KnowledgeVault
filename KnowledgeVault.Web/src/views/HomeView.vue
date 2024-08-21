@@ -43,6 +43,8 @@
 import { defineComponent, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
 import { InitDataAll } from '@/type/all'
+import Cookies from 'js-cookie'
+
 
 export default defineComponent({
   name: 'HomeView',
@@ -62,7 +64,7 @@ export default defineComponent({
     // 退出登录
     const exit = () => {
       router.push('/login')
-      localStorage.removeItem("NbuAchievementManagementSystemAdministrator"); // 删除权限
+      Cookies.remove("token") 
     }
 
     return { dataAll, route, needList, active: route.path, exit }

@@ -1,3 +1,6 @@
+import Cookies from 'js-cookie'
+
+
 export interface OptionInt {
   value: number,
   label: string
@@ -5,7 +8,7 @@ export interface OptionInt {
 
 export class InitDataAll {
   // 身份状态 true：管理员， false: 游客
-  identityID: boolean = localStorage.NbuAchievementManagementSystemAdministrator && localStorage.NbuAchievementManagementSystemAdministrator === "admin" ? true : false
+  identityID: boolean = Cookies.get("token")!=null ? true : false
   options: OptionInt[] = [
     {
       value: 1,

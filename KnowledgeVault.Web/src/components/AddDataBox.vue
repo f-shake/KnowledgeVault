@@ -40,8 +40,7 @@
         </el-form-item>
         <el-form-item label="文件">
             <el-upload ref="uploadRef" :on-success="uploadSuccess" :file-list="fileList" class="upload-demo"
-                :on-remove="removeUpload" action="http://autodotua.top:12336/api/File"
-                :headers="{ 'Authorization': '123456' }">
+                :on-remove="removeUpload" :action="baseUrl + '/File'" :headers="{ 'Authorization': token }">
                 <template #trigger>
                     <el-button type="primary" size="small">选择文件</el-button>
                 </template>
@@ -79,8 +78,8 @@
             <el-input v-model="paperInsert.theme" />
         </el-form-item>
         <el-form-item label="文件">
-            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo"
-                action="http://autodotua.top:12336/api/File" :headers="{ 'Authorization': '123456' }">
+            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo" :action="baseUrl + '/File'"
+                :headers="{ 'Authorization': token }">
                 <template #trigger>
                     <el-button type="primary" size="small">选择文件</el-button>
                 </template>
@@ -111,8 +110,8 @@
             <el-input v-model="paperInsert.theme" />
         </el-form-item>
         <el-form-item label="文件">
-            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo"
-                action="http://autodotua.top:12336/api/File" :headers="{ 'Authorization': '123456' }">
+            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo" :action="baseUrl + '/File'"
+                :headers="{ 'Authorization': token }">
                 <template #trigger>
                     <el-button type="primary" size="small">选择文件</el-button>
                 </template>
@@ -137,8 +136,8 @@
             <el-input v-model="paperInsert.theme" />
         </el-form-item>
         <el-form-item label="文件">
-            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo"
-                action="http://autodotua.top:12336/api/File" :headers="{ 'Authorization': '123456' }">
+            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo" :action="baseUrl + '/File'"
+                :headers="{ 'Authorization': token }">
                 <template #trigger>
                     <el-button type="primary" size="small">选择文件</el-button>
                 </template>
@@ -174,20 +173,20 @@
             <el-input v-model="paperInsert.year" type="number" />
         </el-form-item>
         <el-form-item label="执行日期" required>
-            <el-input v-model="paperInsert.executionTime" placeholder="格式要求如：2024-05-01"/>
+            <el-input v-model="paperInsert.executionTime" placeholder="格式要求如：2024-05-01" />
         </el-form-item>
         <el-form-item label="金额（万元)" required>
             <el-input v-model="paperInsert.amount" />
         </el-form-item>
         <el-form-item label="项目号" required>
-            <el-input v-model="paperInsert.number"/>
+            <el-input v-model="paperInsert.number" />
         </el-form-item>
         <el-form-item label="备注">
             <el-input v-model="paperInsert.theme" />
         </el-form-item>
         <el-form-item label="文件">
-            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo"
-                action="http://autodotua.top:12336/api/File" :headers="{ 'Authorization': '123456' }">
+            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo" :action="baseUrl + '/File'"
+                :headers="{ 'Authorization': token }">
                 <template #trigger>
                     <el-button type="primary" size="small">选择文件</el-button>
                 </template>
@@ -208,9 +207,11 @@ import { insertPaper, editItemApi } from '@/request/api'
 import { ElMessage } from 'element-plus'
 import { resetInsertForm } from '@/utils/commonFunctions'
 import bus from '@/utils/bus'
+import Cookies from 'js-cookie'
+import baseUrl from '../request/url'
 
 
-
+const token = Cookies.get("token")
 // 实例化数据
 const data = reactive(new InitData())
 let handleType = ref(0);  // 判断是添加页面还是编辑页面 添加为 1， 编辑为2
@@ -337,7 +338,7 @@ export default defineComponent({
         }
 
         // 将方法暴露给父组件
-        return { fileList, data, ...toRefs(data), onSubmit, uploadRef, uploadSuccess, removeUpload, paperType, resetInsertForm }
+        return { baseUrl, token, fileList, data, ...toRefs(data), onSubmit, uploadRef, uploadSuccess, removeUpload, paperType, resetInsertForm }
     }
 })
 </script>
