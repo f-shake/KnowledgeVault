@@ -19,6 +19,10 @@
             </el-form-item>
         </el-form>
     </div>
+
+    <div class="developer">
+        开发者：{{dev}}
+    </div>
 </template>
 
 <script lang="ts">
@@ -38,6 +42,9 @@ export default defineComponent({
         const data = reactive(new LoginData());
         const adminShow = ref(false);   // 管理员登陆密码默认不显示
 
+        let dev="JUU3JThFJThCJUU4JTkyJTk5JUU2JTgxJUE5JUVGJUJDJTg4JUU1JTg5JThEJUU3JUFCJUFGJUVGJUJDJTg5JUUzJTgwJTgxJUU2JTk2JUI5JUU5JTlDJTg3JUVGJUJDJTg4JUU1JTkwJThFJUU3JUFCJUFGLyVFNiU5NSVCMCVFNiU4RCVBRSVFNSVCQSU5MyVFRiVCQyU4OQ=="
+        dev=atob(dev)
+        dev=decodeURI(dev);
         // 提示
         const warnTip = (message: string) => {
             ElMessage({
@@ -67,7 +74,7 @@ export default defineComponent({
             Cookies.remove("token")
             router.push('/all')
         }
-        return { jumpToHome, adminShow, ...toRefs(data), submit, ruleFormRef }
+        return { dev, jumpToHome, adminShow, ...toRefs(data), submit, ruleFormRef }
     }
 })
 </script>
@@ -136,5 +143,11 @@ export default defineComponent({
         bottom: 10px;
         right: 10px;
     }
+}
+
+.developer{
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
 }
 </style>
