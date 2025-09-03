@@ -47,7 +47,7 @@ namespace KnowledgeVault.WebAPI.Service
             {
                 query = query.Where(p => p.Correspond.Contains(request.Correspond));
             }
-            if (request.Type.HasValue)
+            if (request.Type.HasValue && request.Type > 0)
             {
                 query = query.Where(p => p.Type == request.Type);
             }

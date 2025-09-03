@@ -116,7 +116,7 @@ export const resetInsertForm = (data: any) => {
   data.paperInsert.journal = "";
   data.paperInsert.firstAuthor = "";
   data.paperInsert.correspond = "";
-  data.paperInsert.year = null;
+  data.paperInsert.year = new Date().getFullYear();
   data.paperInsert.allAuthors = "";
   data.paperInsert.subType = "";
   data.paperInsert.amount = "";

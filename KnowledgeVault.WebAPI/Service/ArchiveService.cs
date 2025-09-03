@@ -19,11 +19,16 @@ namespace KnowledgeVault.WebAPI.Service
         {
             request.PageSize = 0;
             var data = await achievementService.GetAllAsync(request);
+
             using var ms = new MemoryStream();
-            using TextWriter textWriter = new StreamWriter(ms, new UTF8Encoding(true));
-            using var csv = new CsvWriter(textWriter, CultureInfo.InvariantCulture);
-            csv.Context.RegisterClassMap<AchievementMap>();
-            csv.WriteRecords(data.Items);
+            using (TextWriter textWriter = new StreamWriter(ms, new UTF8Encoding(true), leaveOpen: true))
+            using (var csv = new CsvWriter(textWriter, CultureInfo.InvariantCulture))
+            {
+                csv.Context.RegisterClassMap<AchievementMap>();
+                csv.WriteRecords(data.Items);
+            } 
+
+            ms.Position = 0; // 重置指针
             return ms.ToArray();
         }
 

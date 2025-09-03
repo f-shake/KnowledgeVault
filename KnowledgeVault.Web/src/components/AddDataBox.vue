@@ -1,6 +1,6 @@
 <template>
     <!-- ----------------------------------添加论文---------------------------------- -->
-    <el-form :model="paperInsert" label-width="auto" style="max-width: 600px" v-if="activeType == 1">
+    <el-form :model="paperInsert" label-width="auto" v-if="activeType == 1">
         <el-form-item label="论文名称" required>
             <el-input v-model="paperInsert.title" />
         </el-form-item>
@@ -40,7 +40,7 @@
         </el-form-item>
     </el-form>
     <!-- ----------------------------------添加专利---------------------------------- -->
-    <el-form :model="paperInsert" label-width="auto" style="max-width: 600px" v-else-if="activeType == 2">
+    <el-form :model="paperInsert" label-width="auto" v-else-if="activeType == 2">
         <el-form-item label="专利名称" required>
             <el-input v-model="paperInsert.title" />
         </el-form-item>
@@ -71,7 +71,7 @@
         </el-form-item>
     </el-form>
     <!-- ----------------------------------添加软著---------------------------------- -->
-    <el-form :model="paperInsert" label-width="auto" style="max-width: 600px" v-else-if="activeType == 3">
+    <el-form :model="paperInsert" label-width="auto" v-else-if="activeType == 3">
         <el-form-item label="软著名称" required>
             <el-input v-model="paperInsert.title" />
         </el-form-item>
@@ -89,20 +89,20 @@
         </el-form-item>
         <el-form-item label="申请号" required>
             <el-input v-model="paperInsert.number" />
-      </el-form-item>
+        </el-form-item>
         <el-form-item label="领域">
             <el-input v-model="paperInsert.theme" />
         </el-form-item>
     </el-form>
     <!-- ----------------------------------添加奖项---------------------------------- -->
-    <el-form :model="paperInsert" label-width="auto" style="max-width: 600px" v-else-if="activeType == 4">
+    <el-form :model="paperInsert" label-width="auto" v-else-if="activeType == 4">
         <el-form-item label="奖项名称" required>
             <el-input v-model="paperInsert.title" />
         </el-form-item>
         <el-form-item label="老师">
             <el-input v-model="paperInsert.correspond" />
         </el-form-item>
-        <el-form-item label="老师">
+        <el-form-item label="学生">
             <el-input v-model="paperInsert.firstAuthor" />
         </el-form-item>
         <el-form-item label="获奖年份" required>
@@ -113,7 +113,7 @@
         </el-form-item>
     </el-form>
     <!-- ----------------------------------添加项目---------------------------------- -->
-    <el-form :model="paperInsert" label-width="auto" style="max-width: 600px" v-else-if="activeType == 5">
+    <el-form :model="paperInsert" label-width="auto" v-else-if="activeType == 5">
         <el-form-item label="项目名称" required>
             <el-input v-model="paperInsert.title" />
         </el-form-item>
@@ -155,13 +155,14 @@
     </el-form>
 
     <!-- 公共文件上传组件 -->
-    <el-form :model="paperInsert" label-width="auto" style="max-width: 600px" v-if="activeType">
-        <el-form-item label="文件">
+    <el-form :model="paperInsert" label-width="auto" v-if="activeType">
+        <el-form-item>
             <el-upload ref="uploadRef" :on-success="uploadSuccess" :file-list="fileList" class="upload-demo"
-                :on-remove="removeUpload" :action="baseUrl + '/File'" :headers="{ 'Authorization': token }"
-                :on-progress="handleUploadProgress" :before-upload="beforeUpload" :limit="1">
+                :on-change="handleFileChange" :on-remove="removeUpload" :action="baseUrl + '/File'"
+                :headers="{ 'Authorization': token }" :on-progress="handleUploadProgress" :before-upload="beforeUpload">
                 <template #trigger>
-                    <el-button type="primary" size="small">选择文件</el-button>
+                    <el-button type="primary">{{ (data.paperInsert.fileID == null ||
+                        data.paperInsert.fileID == '') ? '上传' : '替换' }}文件</el-button>
                 </template>
                 <template #tip>
                     <div class="el-upload__tip" v-if="uploadStatus === 'uploading'">
@@ -169,6 +170,9 @@
                     </div>
                     <div class="el-upload__tip" v-if="uploadStatus === 'processing'">
                         文件上传完成，正在处理...
+                    </div>
+                    <div class="el-upload__tip" v-if="uploadStatus === 'complete'">
+                        文件已上传
                     </div>
                 </template>
             </el-upload>
@@ -205,12 +209,16 @@ const isSubmitting = ref(false); // 是否正在保存表单
 // 接收点击编辑的数据
 bus.on('sendRow', (row) => {
     data.paperInsert = { ...data.paperInsert, ...row }
-    console.log(data.paperInsert)
+    if (data.paperInsert.fileID != null && data.paperInsert.fileID != "") {
+        uploadStatus.value = 'complete'
+    }
+    console.log("sendRow", data.paperInsert)
 })
 
 // 判断(handleType)是添加页面还是编辑页面 添加为 1， 编辑为2
 bus.on('sendAddOrEdit', (pageType) => {
     handleType.value = pageType
+    isUploadComplete.value = true;
 })
 bus.on('onClearDrawData', (res) => {
     resetInsertForm(data)   // 重置表单
@@ -346,8 +354,16 @@ export default defineComponent({
             }
         }
 
+        const handleFileChange = (file, fileList) => {
+            // 当选择新文件时，如果已经有文件，则清空列表
+            if (fileList.length > 1) {
+                fileList.shift(); // 移除第一个文件
+            }
+        };
+
         // 将方法暴露给父组件
         return {
+            handleFileChange,
             baseUrl,
             token,
             fileList,
