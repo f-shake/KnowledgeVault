@@ -14,7 +14,8 @@
         </el-form-item>
         <el-form-item label="类型" v-if="config.typeOptions && !isAllView">
           <el-select v-model="itemSelect.subType" :placeholder="config.typePlaceholder" clearable>
-            <el-option v-for="option in config.typeOptions" :key="option.value" :label="option.label" :value="option.value" />
+            <el-option v-for="option in config.typeOptions" :key="option.value" :label="option.label"
+              :value="option.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="年份">
@@ -24,51 +25,38 @@
           <el-button type="primary" @click="getPaper(data)">查询</el-button>
           <el-button @click="resetSelectForm(data)">重置</el-button>
           <el-button @click="getExport(data)" v-if="dataAll.identityID && isAllView">导出</el-button>
-         <div class="add-action" v-if="dataAll.identityID && isAllView">
-        <el-dropdown @command="addData">
-          <el-button type="primary">
-            添加成果<el-icon class="el-icon--right"><arrow-down /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item v-for="item in options" :key="item.value" :command="item.value">
-                {{ item.label }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div> </el-form-item>
+          <div class="add-action" v-if="dataAll.identityID && isAllView">
+            <el-dropdown @command="addData">
+              <el-button type="primary">
+                添加成果<el-icon class="el-icon--right"><arrow-down /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-for="item in options" :key="item.value" :command="item.value">
+                    {{ item.label }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </el-form-item>
       </el-form>
 
       <!-- 添加成果按钮 -->
-    
+
     </div>
 
     <!-- 分页和记录数 -->
     <div class="pagination-container">
       <el-tag type="primary" class="total-count">共{{ totalCount }}项记录</el-tag>
-      <el-pagination 
-        small 
-        background 
-        layout="prev, pager, next" 
-        v-model:current-page="itemSelect.PageIndex"
-        :page-size="itemSelect.PageSize" 
-        :total="totalCount" 
-        @current-change="getPaper(data)" 
-      />
+      <el-pagination small background layout="prev, pager, next" v-model:current-page="itemSelect.PageIndex"
+        :page-size="itemSelect.PageSize" :total="totalCount" @current-change="getPaper(data)" />
     </div>
 
     <!-- 成果展示表格 -->
     <div class="table-container">
-      <el-table 
-        :data="paperData" 
-        v-loading="loading" 
-        highlight-current-row 
-        stripe 
-        border 
-        show-overflow-tooltip
-        @sort-change="(event: any) => sortTableFun(event, data)"
-      >
+      <el-table :data="paperData" v-loading="loading" highlight-current-row stripe border show-overflow-tooltip
+        @sort-change="(event: any) => sortTableFun(event, data)">
         <el-table-column type="expand">
           <template #default="props">
             <div class="expand-content">
@@ -87,7 +75,7 @@
                 <p><span class="description">发表年份:</span> {{ props.row.year }}</p>
                 <p><span class="description">主题 :</span> {{ props.row.theme }}</p>
               </div>
-              
+
               <!-- 专利 -->
               <div v-if="props.row.type == 2">
                 <p><span class="description">专利名称:</span> {{ props.row.title }}</p>
@@ -99,7 +87,7 @@
                 <p><span class="description">专利号:</span> {{ props.row.number }}</p>
                 <p><span class="description">主题 :</span> {{ props.row.theme }}</p>
               </div>
-              
+
               <!-- 软著 -->
               <div v-if="props.row.type == 3">
                 <p><span class="description">名称 :</span> {{ props.row.title }}</p>
@@ -110,7 +98,7 @@
                 <p><span class="description">申请号:</span> {{ props.row.number }}</p>
                 <p><span class="description">主题 :</span> {{ props.row.theme }}</p>
               </div>
-              
+
               <!-- 奖项 -->
               <div v-if="props.row.type == 4">
                 <p><span class="description">奖项名称:</span> {{ props.row.title }}</p>
@@ -119,7 +107,7 @@
                 <p><span class="description">获奖年份:</span> {{ props.row.year }}</p>
                 <p><span class="description">主题 :</span> {{ props.row.theme }}</p>
               </div>
-              
+
               <!-- 基金项目 -->
               <div v-if="props.row.type == 5">
                 <p><span class="description">基金名称:</span> {{ props.row.title }}</p>
@@ -136,8 +124,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="ID" type="index" 
-          :index="indexMethod(itemSelect.PageIndex, itemSelect.PageSize)"
+        <el-table-column label="ID" type="index" :index="indexMethod(itemSelect.PageIndex, itemSelect.PageSize)"
           width="60" />
         <el-table-column :label="isAllView ? '名称' : config.tableTitleLabel" prop="title" min-width="200" />
         <el-table-column v-if="isAllView" sortable="custom" label="类别" prop="type" width="120px">
@@ -147,12 +134,15 @@
         </el-table-column>
         <el-table-column sortable="custom" label="老师" prop="correspond" />
         <el-table-column sortable="custom" label="学生" prop="firstAuthor" v-if="config.showStudent || isAllView" />
-        <el-table-column v-if="!isAllView && config.showTableType" sortable="custom" :label="config.tableTypeLabel" prop="subType" min-width="160" />
-        <el-table-column v-if="!isAllView && config.showTableJournal" sortable="custom" :label="config.tableJournalLabel" prop="journal" min-width="160" />
+        <el-table-column v-if="!isAllView && config.showTableType" sortable="custom" :label="config.tableTypeLabel"
+          prop="subType" min-width="160" />
+        <el-table-column v-if="!isAllView && config.showTableJournal" sortable="custom"
+          :label="config.tableJournalLabel" prop="journal" min-width="160" />
         <el-table-column sortable="custom" :label="isAllView ? '年份' : config.yearLabel" prop="year" />
         <el-table-column fixed="right" label="操作" width="160">
           <template #default="scope">
-            <el-button link type="primary" size="small" @click="downloadItem(scope.row)">
+            <el-button :disabled="scope.row.fileID == null || scope.row.fileID == ''" link type="primary" size="small"
+              @click="downloadItem(scope.row)">
               下载
             </el-button>
             <el-button link v-if="dataAll.identityID" type="primary" size="small"
@@ -170,7 +160,7 @@
     </div>
 
     <!-- 编辑抽屉 -->
-    <el-drawer v-model="drawer" :title="selectTypeTitle" :size="isAllView ? '75%' : '75%'" 
+    <el-drawer v-model="drawer" :title="selectTypeTitle" :size="isAllView ? '75%' : '75%'"
       :direction="isAllView ? 'btt' : 'rtl'" :before-close="handleClose">
       <AddDataBox :activeType="Number(selectType)" @toParentHandle="toParentHandle" />
     </el-drawer>
@@ -350,10 +340,9 @@ export default defineComponent({
     }
   },
   setup(props) {
-    // 实例化数据
     const data = reactive(new InitData());
     const dataAll = reactive(new InitDataAll());
-    
+
     // 计算属性
     const isAllView = computed(() => props.type === 0);
     const config = computed(() => CONFIG_MAP[props.type as keyof typeof CONFIG_MAP]);
@@ -373,6 +362,8 @@ export default defineComponent({
 
     // 初始化数据
     const initData = () => {
+      data.paperData = [];
+      data.totalCount = 0;
       data.itemSelect.type = props.type;
       getPaper(data);
       identityDeter(dataAll);
@@ -494,19 +485,19 @@ export default defineComponent({
   background-color: #fff;
   border-radius: 4px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  
+
   :deep(.el-table) {
     height: 100%;
-    
+
     .el-table__body-wrapper {
       overflow-y: auto;
     }
   }
-  
+
   .expand-content {
     padding: 0 20px;
     line-height: 30px;
-    
+
     p {
       margin: 8px 0;
     }
@@ -523,6 +514,7 @@ export default defineComponent({
 @media (max-width: 1200px) {
   .search-filter {
     .filter-form :deep(.el-form-item) {
+
       .el-input,
       .el-select {
         width: 140px;

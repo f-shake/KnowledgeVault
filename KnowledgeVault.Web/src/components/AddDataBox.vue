@@ -38,14 +38,6 @@
         <el-form-item label="领域">
             <el-input v-model="paperInsert.theme" />
         </el-form-item>
-        <el-form-item label="文件">
-            <el-upload ref="uploadRef" :on-success="uploadSuccess" :file-list="fileList" class="upload-demo"
-                :on-remove="removeUpload" :action="baseUrl + '/File'" :headers="{ 'Authorization': token }">
-                <template #trigger>
-                    <el-button type="primary" size="small">选择文件</el-button>
-                </template>
-            </el-upload>
-        </el-form-item>
     </el-form>
     <!-- ----------------------------------添加专利---------------------------------- -->
     <el-form :model="paperInsert" label-width="auto" style="max-width: 600px" v-else-if="activeType == 2">
@@ -77,14 +69,6 @@
         <el-form-item label="领域">
             <el-input v-model="paperInsert.theme" />
         </el-form-item>
-        <el-form-item label="文件">
-            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo" :action="baseUrl + '/File'"
-                :headers="{ 'Authorization': token }">
-                <template #trigger>
-                    <el-button type="primary" size="small">选择文件</el-button>
-                </template>
-            </el-upload>
-        </el-form-item>
     </el-form>
     <!-- ----------------------------------添加软著---------------------------------- -->
     <el-form :model="paperInsert" label-width="auto" style="max-width: 600px" v-else-if="activeType == 3">
@@ -105,17 +89,9 @@
         </el-form-item>
         <el-form-item label="申请号" required>
             <el-input v-model="paperInsert.number" />
-        </el-form-item>
+      </el-form-item>
         <el-form-item label="领域">
             <el-input v-model="paperInsert.theme" />
-        </el-form-item>
-        <el-form-item label="文件">
-            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo" :action="baseUrl + '/File'"
-                :headers="{ 'Authorization': token }">
-                <template #trigger>
-                    <el-button type="primary" size="small">选择文件</el-button>
-                </template>
-            </el-upload>
         </el-form-item>
     </el-form>
     <!-- ----------------------------------添加奖项---------------------------------- -->
@@ -134,14 +110,6 @@
         </el-form-item>
         <el-form-item label="主题">
             <el-input v-model="paperInsert.theme" />
-        </el-form-item>
-        <el-form-item label="文件">
-            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo" :action="baseUrl + '/File'"
-                :headers="{ 'Authorization': token }">
-                <template #trigger>
-                    <el-button type="primary" size="small">选择文件</el-button>
-                </template>
-            </el-upload>
         </el-form-item>
     </el-form>
     <!-- ----------------------------------添加项目---------------------------------- -->
@@ -184,19 +152,33 @@
         <el-form-item label="备注">
             <el-input v-model="paperInsert.theme" />
         </el-form-item>
+    </el-form>
+
+    <!-- 公共文件上传组件 -->
+    <el-form :model="paperInsert" label-width="auto" style="max-width: 600px" v-if="activeType">
         <el-form-item label="文件">
-            <el-upload ref="uploadRef" :on-success="uploadSuccess" class="upload-demo" :action="baseUrl + '/File'"
-                :headers="{ 'Authorization': token }">
+            <el-upload ref="uploadRef" :on-success="uploadSuccess" :file-list="fileList" class="upload-demo"
+                :on-remove="removeUpload" :action="baseUrl + '/File'" :headers="{ 'Authorization': token }"
+                :on-progress="handleUploadProgress" :before-upload="beforeUpload" :limit="1">
                 <template #trigger>
                     <el-button type="primary" size="small">选择文件</el-button>
+                </template>
+                <template #tip>
+                    <div class="el-upload__tip" v-if="uploadStatus === 'uploading'">
+                        正在上传中...{{ uploadProgress }}%
+                    </div>
+                    <div class="el-upload__tip" v-if="uploadStatus === 'processing'">
+                        文件上传完成，正在处理...
+                    </div>
                 </template>
             </el-upload>
         </el-form-item>
     </el-form>
 
-    <el-button type="primary" @click="onSubmit">提交</el-button>
+    <el-button type="primary" @click="onSubmit" :disabled="!isUploadComplete || isSubmitting">
+        {{ isSubmitting ? '保存中...' : '保存' }}
+    </el-button>
     <el-button @click="resetInsertForm(data)">重置</el-button>
-
 </template>
 
 <script lang="ts">
@@ -210,16 +192,19 @@ import bus from '@/utils/bus'
 import Cookies from 'js-cookie'
 import baseUrl from '../request/url'
 
-
 const token = Cookies.get("token")
 // 实例化数据
 const data = reactive(new InitData())
 let handleType = ref(0);  // 判断是添加页面还是编辑页面 添加为 1， 编辑为2
 const fileList = ref([]);   // 上传数据列表
+const uploadStatus = ref(''); // 'uploading' | 'processing' | 'complete'
+const uploadProgress = ref(0);
+const isUploadComplete = ref(true);
+const isSubmitting = ref(false); // 是否正在保存表单
 
 // 接收点击编辑的数据
 bus.on('sendRow', (row) => {
-    data.paperInsert = { ...data.paperInsert, ...row }  // 将数据赋值给编辑项
+    data.paperInsert = { ...data.paperInsert, ...row }
     console.log(data.paperInsert)
 })
 
@@ -230,6 +215,8 @@ bus.on('sendAddOrEdit', (pageType) => {
 bus.on('onClearDrawData', (res) => {
     resetInsertForm(data)   // 重置表单
     fileList.value = []  // 清除上传文件
+    uploadStatus.value = ''
+    isUploadComplete.value = false
 })
 
 export default defineComponent({
@@ -244,6 +231,7 @@ export default defineComponent({
             journalShow: false,
             degreeShow: false
         })
+
         // 监听论文类型
         watch(() => data.paperInsert.subType, (newVal, oldVal) => {
             if (newVal === "期刊论文") {
@@ -265,23 +253,45 @@ export default defineComponent({
                     data.paperInsert.journal = "";
                 }
             }
-        },
-            {
-                immediate: true
-            })
+        }, { immediate: true })
+
+        // 上传文件前的处理
+        const beforeUpload = () => {
+            uploadStatus.value = 'uploading';
+            isUploadComplete.value = false;
+            return true;
+        }
+
+        // 上传进度处理
+        const handleUploadProgress = (event, file, fileList) => {
+            uploadProgress.value = Math.round(event.percent);
+            if (event.percent === 100) {
+                uploadStatus.value = 'processing';
+            }
+        }
 
         // 上传文件成功后的回调
         const uploadSuccess = (response: any) => {
             data.paperInsert.fileID = response.fileID;
-            data.paperInsert.fileExtension = response.extension
+            data.paperInsert.fileExtension = response.extension;
+            uploadStatus.value = 'complete';
+            isUploadComplete.value = true;
+            setTimeout(() => {
+                uploadStatus.value = '';
+            }, 1500);
         }
+
         // 移除文件时的回调
         const removeUpload = (file: any, fileList: any) => {
             data.paperInsert.fileID = "";
-            data.paperInsert.fileExtension = ""
+            data.paperInsert.fileExtension = "";
+            uploadStatus.value = '';
+            isUploadComplete.value = false;
         }
-        // 确定提交 -- 添加 / 编辑
+
+        // 确定保存 -- 添加 / 编辑
         const onSubmit = () => {
+            isSubmitting.value = true;
             // 判断(handleType)是添加页面还是编辑页面 添加为 1 ， 编辑为2
             if (handleType.value == 1) {   // 添加操作
                 data.paperInsert.type = Number(props.activeType)
@@ -289,11 +299,6 @@ export default defineComponent({
                 if (data.paperInsert.type != 5) {
                     data.paperInsert.amount = 0
                 }
-                // // 判断是否上传了文件
-                // if (!data.paperInsert.fileID) {
-                //     ElMessage.info("请上传文件");
-                //     return
-                // }
                 insertPaper(data.paperInsert).then((res) => {
                     if (typeof res === 'number') {  // 添加成功
                         ElMessage({
@@ -315,10 +320,13 @@ export default defineComponent({
                         plain: true,
                     })
                     console.log(error)
+                }).finally(() => {
+                    isSubmitting.value = false;
                 })
             } else if (handleType.value === 2) {  // 编辑操作
                 if (!data.paperInsert.fileID) {
                     ElMessage.info("请上传文件");
+                    isSubmitting.value = false;
                     return
                 }
                 editItemApi(data.paperInsert).then((res) => {
@@ -330,15 +338,34 @@ export default defineComponent({
                     } else {
                         ElMessage.error("编辑失败！")
                     }
-
                 }).catch((error) => {
                     console.log(error)
+                }).finally(() => {
+                    isSubmitting.value = false;
                 })
             }
         }
 
         // 将方法暴露给父组件
-        return { baseUrl, token, fileList, data, ...toRefs(data), onSubmit, uploadRef, uploadSuccess, removeUpload, paperType, resetInsertForm }
+        return {
+            baseUrl,
+            token,
+            fileList,
+            data,
+            ...toRefs(data),
+            onSubmit,
+            uploadRef,
+            uploadSuccess,
+            removeUpload,
+            paperType,
+            resetInsertForm,
+            uploadStatus,
+            uploadProgress,
+            isUploadComplete,
+            isSubmitting,
+            beforeUpload,
+            handleUploadProgress
+        }
     }
 })
 </script>
@@ -354,5 +381,11 @@ export default defineComponent({
 .fade-leave-to {
     opacity: 0;
     /* 初始状态为透明 */
+}
+
+.el-upload__tip {
+    color: #666;
+    font-size: 12px;
+    margin-top: 7px;
 }
 </style>

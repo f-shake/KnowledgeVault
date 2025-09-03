@@ -4,18 +4,12 @@ import UnifiedView from '../views/ListView.vue' // 引入统一组件
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: '/login',
-    name: 'login',
-    component: () => import(/* webpackChunkName: "login" */ '../views/LoginView.vue')
-  },
-  {
     path: '/',
     name: 'home',
     component: HomeView,
-    redirect: 'login',
     children: [
       {
-        path: '/all',
+        path: '/',
         name: 'all',
         meta: {
           "title": '全部',
