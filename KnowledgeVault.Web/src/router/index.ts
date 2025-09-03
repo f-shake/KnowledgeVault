@@ -1,13 +1,11 @@
 import { createRouter, createWebHistory, createWebHashHistory, RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import UnifiedView from '../views/ListView.vue' // 引入统一组件
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/login',
     name: 'login',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "login" */ '../views/LoginView.vue')
   },
   {
@@ -23,7 +21,8 @@ const routes: Array<RouteRecordRaw> = [
           "title": '全部',
           isShow: true,
         },
-        component: () => import(/* webpackChunkName: "all" */ '../views/AllView.vue')
+        component: UnifiedView,
+        props: { type: 0 } // 传递type参数表示全部视图
       },
       {
         path: '/paper',
@@ -32,7 +31,8 @@ const routes: Array<RouteRecordRaw> = [
           "title": '论文',
           isShow: true
         },
-        component: () => import(/* webpackChunkName: "paper" */ '../views/PaperView.vue')
+        component: UnifiedView,
+        props: { type: 1 } // 传递type参数表示论文视图
       },
       {
         path: '/patent',
@@ -41,7 +41,8 @@ const routes: Array<RouteRecordRaw> = [
           "title": '专利',
           isShow: true
         },
-        component: () => import(/* webpackChunkName: "patent" */ '../views/PatentView.vue')
+        component: UnifiedView,
+        props: { type: 2 } // 传递type参数表示专利视图
       },
       {
         path: '/software',
@@ -50,7 +51,8 @@ const routes: Array<RouteRecordRaw> = [
           "title": '软著',
           isShow: true
         },
-        component: () => import(/* webpackChunkName: "fund" */ '../views/SoftwareView.vue')
+        component: UnifiedView,
+        props: { type: 3 } // 传递type参数表示软著视图
       },
       {
         path: '/prize',
@@ -59,7 +61,8 @@ const routes: Array<RouteRecordRaw> = [
           "title": '奖项',
           isShow: true
         },
-        component: () => import(/* webpackChunkName: "fund" */ '../views/PrizeView.vue')
+        component: UnifiedView,
+        props: { type: 4 } // 传递type参数表示奖项视图
       },
       {
         path: '/project',
@@ -68,18 +71,16 @@ const routes: Array<RouteRecordRaw> = [
           "title": '项目',
           isShow: true
         },
-        component: () => import(/* webpackChunkName: "fund" */ '../views/ProjectView.vue')
+        component: UnifiedView,
+        props: { type: 5 } // 传递type参数表示项目视图
       },
     ]
   },
 ]
 
 const router = createRouter({
-  // history: createWebHistory(process.env.BASE_URL),
   history: createWebHashHistory(),
   routes
 })
-
-
 
 export default router

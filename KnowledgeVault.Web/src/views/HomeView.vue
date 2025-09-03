@@ -1,73 +1,128 @@
 <template>
   <div class="home">
-      <!-- -----------------header----------------- -->
-      <el-header>
-        <el-row :gutter="20">
-          <el-col :span="4" class="logo">
-            <img src="../assets/logo.png" alt="">
-          </el-col>
-          <el-col :span="16">
-            <h2>成果管理系统</h2>
-          </el-col>
-          <el-col :span="4" class="quit-login">
-            <el-button type="primary" @click="exit">
-              退出
-            </el-button>
-          </el-col>
-        </el-row>
-      </el-header>
-      <el-container>
-        <!-- -----------------Aside----------------- -->
-        <el-aside width="200px">
-          <el-menu active-text-color="#ffd04b" background-color="#545c64" text-color="#fff" :default-active="active"
-            router>
-            <!-- router 开启路由模式 -->
-            <el-menu-item :index="need.path" v-for="need in needList" :key="need.path">
-              <span>{{ need.meta.title }}</span>
-            </el-menu-item>
-          </el-menu>
-        </el-aside>
-        <!-- -----------------main----------------- -->
-        <el-main>
-          <router-view v-slot="{ Component }">
-            <keep-alive>
-              <component :is="Component" />
-            </keep-alive>
-          </router-view>
-        </el-main>
-      </el-container>
+    <!-- -----------header----------- -->
+    <el-header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <img src="../assets/logo.png" alt="系统Logo">
+        </div>
+        <h2 class="title">CIRSM 成果管理系统</h2>
+        <div class="auth-btn">
+          <el-button link type="primary" @click="showLoginDialog" v-if="!isAdmin">
+            登录管理员
+          </el-button>
+          <el-button link type="danger" @click="logout" v-else>
+            退出管理员
+          </el-button>
+        </div>
+      </div>
+    </el-header>
+
+    <!-- 登录弹窗 -->
+    <el-dialog v-model="loginDialogVisible" title="管理员登录" width="30%">
+      <el-form :model="loginForm" label-width="100px">
+        <el-form-item label="管理员密码">
+          <el-input type="password" v-model="loginForm.password" @keyup.enter="login"></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="loginDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="login">登录</el-button>
+      </template>
+    </el-dialog>
+
+    <el-container>
+      <!-- -----------Aside----------- -->
+      <el-aside width="200px">
+        <el-menu active-text-color="#ffd04b" background-color="#545c64" text-color="#fff" :default-active="active"
+          router>
+          <el-menu-item :index="need.path" v-for="need in needList" :key="need.path">
+            <span>{{ need.meta.title }}</span>
+          </el-menu-item>
+        </el-menu>
+      </el-aside>
+      <!-- -----------main----------- -->
+      <el-main>
+        <router-view v-slot="{ Component }">
+          <component :is="Component" :key="componentKey" />
+        </router-view>
+      </el-main>
+    </el-container>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive } from 'vue';
+import { defineComponent, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
 import { InitDataAll } from '@/type/all'
 import Cookies from 'js-cookie'
-
+import { verifyIdentity } from '@/request/api'
+import { ElMessage } from 'element-plus'
 
 export default defineComponent({
   name: 'HomeView',
   setup() {
-    // 实例化数据
     const dataAll = reactive(new InitDataAll());
-    // 当前路由信息
     const route = useRoute();
-
-
-    // 需要展示的路由列表
     const router = useRouter();
+
     const needList = router.getRoutes().filter(r => {
       return r.meta && r.meta.isShow
     })
 
-    // 退出登录
-    const exit = () => {
-      router.push('/login')
-      Cookies.remove("token") 
+    // 登录相关状态
+    const isAdmin = ref(!!Cookies.get("token"));
+    const loginDialogVisible = ref(false);
+    const loginForm = reactive({
+      password: ''
+    });
+    const componentKey = ref(0); // 用于强制刷新组件
+
+    // 显示登录弹窗
+    const showLoginDialog = () => {
+      loginDialogVisible.value = true;
     }
 
-    return { dataAll, route, needList, active: route.path, exit }
+    // 管理员登录
+    const login = () => {
+      verifyIdentity(loginForm.password).then((res: any) => {
+        if (res === true) {
+          Cookies.set("token", loginForm.password, { expires: 7 });
+          isAdmin.value = true;
+          loginDialogVisible.value = false;
+          loginForm.password = '';
+          componentKey.value++; // 强制刷新组件
+          ElMessage.success('登录成功');
+        } else {
+          ElMessage.error('密码错误');
+        }
+      }).catch((error) => {
+        console.log(error);
+        ElMessage.error('登录失败');
+      });
+    }
+
+    // 退出登录
+    const logout = () => {
+      Cookies.remove("token");
+      isAdmin.value = false;
+      componentKey.value++; // 强制刷新组件
+      ElMessage.success('已退出管理员账号');
+    }
+
+    return {
+      dataAll,
+      route,
+      needList,
+      active: route.path,
+      isAdmin,
+      loginDialogVisible,
+      loginForm,
+      componentKey,
+      showLoginDialog,
+      login,
+      logout
+    }
   }
 });
 </script>
@@ -77,32 +132,44 @@ export default defineComponent({
   width: 100%;
   height: 100%;
 
-  .el-header {
-    height: 80px;
-    text-align: center;
-    position: relative;
-    border-bottom: 2px solid rgb(49, 47, 44);
+  .header {
+    height: 50px;
+    line-height: 50px;
+    border-bottom: 1px solid #e6e6e6;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
 
-    img {
-      height: 60px;
-      position: absolute;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      user-select: none;
-    }
+    .header-content {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
 
-    h2,
-    .quit-login {
-      height: 80px;
-      line-height: 80px;
-      color: rgb(49, 47, 44);
-      user-select: none;
+      .logo {
+        img {
+          height: 36px;
+          margin-top:14px;
+        }
+      }
+
+      .title {
+        margin: 0;
+        font-size: 18px;
+        color: #333;
+      }
+
+      .auth-btn {
+        .el-button {
+          padding: 0;
+          margin-left: 10px;
+        }
+      }
     }
   }
 
   .el-container {
-    height: calc(100vh - 80px);
-    // height: 100vh;
+    height: calc(100vh - 50px);
 
     .el-aside {
       height: 100%;
@@ -111,6 +178,7 @@ export default defineComponent({
 
     .el-main {
       background-color: #fffff0;
+      padding: 15px;
     }
   }
 }
