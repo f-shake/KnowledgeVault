@@ -158,7 +158,7 @@
     <el-form :model="paperInsert" label-width="auto" v-if="activeType">
         <el-form-item>
             <el-upload ref="uploadRef" :on-success="uploadSuccess" :file-list="fileList" class="upload-demo"
-                :on-change="handleFileChange" :on-remove="removeUpload" :action="baseUrl + '/File'"
+                :on-change="handleFileChange" :on-remove="removeUpload" :action="baseUrl + '/File'" :on-error="handleUploadError"
                 :headers="{ 'Authorization': token }" :on-progress="handleUploadProgress" :before-upload="beforeUpload">
                 <template #trigger>
                     <el-button type="primary">{{ (data.paperInsert.fileID == null ||
@@ -173,6 +173,9 @@
                     </div>
                     <div class="el-upload__tip" v-if="uploadStatus === 'complete'">
                         文件已上传
+                    </div>
+                    <div class="el-upload__tip" v-if="uploadStatus === ''">
+                        *请上传PDF格式文件
                     </div>
                 </template>
             </el-upload>
@@ -278,6 +281,13 @@ export default defineComponent({
             }
         }
 
+        // 上传进度处理
+        const handleUploadError = (error) => {
+        ElMessage.error(error.message||'上传失败，未知原因');
+        uploadStatus.value = '';
+        
+        }
+
         // 上传文件成功后的回调
         const uploadSuccess = (response: any) => {
             data.paperInsert.fileID = response.fileID;
@@ -319,15 +329,16 @@ export default defineComponent({
                         resetInsertForm(data) // 重置表单
                         fileList.value = []  // 清除上传文件
                     } else {
-                        ElMessage.error('添加失败！')
+                        ElMessage.error('添加失败then！')
                     }
                 }).catch((error) => {
-                    ElMessage({
-                        message: '添加失败!',
-                        type: 'error',
-                        plain: true,
-                    })
-                    console.log(error)
+                    let message="添加失败catch"
+                    if(error&&error.response&&error.response.data){
+                        message=error.response.data||message
+                    }
+                        ElMessage.error(message)
+                    console.log("error",error)
+                    console.log(error.response.data)
                 }).finally(() => {
                     isSubmitting.value = false;
                 })
@@ -380,7 +391,8 @@ export default defineComponent({
             isUploadComplete,
             isSubmitting,
             beforeUpload,
-            handleUploadProgress
+            handleUploadProgress,
+            handleUploadError
         }
     }
 })

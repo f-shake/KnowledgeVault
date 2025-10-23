@@ -146,6 +146,7 @@ namespace KnowledgeVault.WebAPI.Service
             {
                 throw new StatusBasedException("已存在相同名称的成果。", System.Net.HttpStatusCode.Conflict);
             }
+
             achievement.CreateTime = DateTime.Now;
             achievement.ModifiedTime = DateTime.Now;
             achievement.IsDeleted = false;

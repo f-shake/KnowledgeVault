@@ -48,6 +48,11 @@ namespace KnowledgeVault.WebAPI.Controllers
         [HttpPost("Insert")]
         public async Task<int> InsertAsync(AchievementEntity achievement)
         {
+            bool requireFile = configuration.GetValue<bool>("RequireFile");
+            if (requireFile && string.IsNullOrEmpty(achievement.FileID))
+            {
+                throw new StatusBasedException("必须上传附件", System.Net.HttpStatusCode.BadRequest);
+            }
             return await achievementService.InsertAsync(achievement);
         }
 

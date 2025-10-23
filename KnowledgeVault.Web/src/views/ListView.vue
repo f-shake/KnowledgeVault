@@ -139,11 +139,15 @@
         <el-table-column v-if="!isAllView && config.showTableJournal" sortable="custom"
           :label="config.tableJournalLabel" prop="journal" min-width="160" />
         <el-table-column sortable="custom" :label="isAllView ? '年份' : config.yearLabel" prop="year" />
-        <el-table-column fixed="right" label="操作" width="160">
+        <el-table-column fixed="right" label="操作" width="200">
           <template #default="scope">
             <el-button :disabled="scope.row.fileID == null || scope.row.fileID == ''" link type="primary" size="small"
-              @click="downloadItem(scope.row)">
+              @click="downloadItem(scope.row, false)">
               下载
+            </el-button>
+            <el-button :disabled="scope.row.fileID == null || scope.row.fileID == ''" link type="primary" size="small"
+              @click="downloadItem(scope.row, true)">
+              预览
             </el-button>
             <el-button link v-if="dataAll.identityID" type="primary" size="small"
               @click="editItemDraw(scope.row, dataAll)">

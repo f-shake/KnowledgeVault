@@ -25,27 +25,37 @@ instance.interceptors.request.use((config) => {
 
 
 // 响应拦截
-instance.interceptors.response.use((res) => {
-    // if (res.status !== 200) {
-    //     return false
-    // }
-    return res.data
-
-}, (error) => {
-    console.log(error)
-    switch (error.response.status) {
-        case 400:
-            ElMessage.error(error.response.data.title)
-            break
-        case 401:
-            ElMessage.error(error.response.data)
-            break
-        case 409:
-            ElMessage.error(error.response.data)
-            break
-        default:
-            console.log('未知错误')
+instance.interceptors.response.use(
+    (res) => {
+        // 如果状态码是2xx，直接返回数据
+        if (res.status === 200) {
+            return res.data;
+        } else {
+            // 如果状态码不是200，直接抛出错误
+            return Promise.reject(new Error('Request failed with status ' + res.status));
+        }
+    },
+    (error) => {
+        // 处理具体的错误
+        if (error.response) {
+            switch (error.response.status) {
+                case 400:
+                    ElMessage.error(error.response.data.title || 'Bad Request');
+                    break;
+                case 401:
+                    ElMessage.error(error.response.data || 'Unauthorized');
+                    break;
+                case 409:
+                    ElMessage.error(error.response.data || 'Conflict');
+                    break;
+                default:
+                    ElMessage.error('Unknown error');
+            }
+        } else {
+            ElMessage.error('Network Error');
+        }
+        return Promise.reject(error); // 确保错误进入 `catch`
     }
-})
+);
 
 export default instance;

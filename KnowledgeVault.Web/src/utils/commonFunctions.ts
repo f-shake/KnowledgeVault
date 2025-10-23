@@ -57,10 +57,19 @@ export const resetQueryList = (itemSelect: any) => {
 };
 
 // 下载文件
-export const downloadItem = (row: any) => {
+export const downloadItem = (row: any, preview: boolean) => {
   const url = baseUrl + "/File/" + row.fileID;
-  // 使用 window.open() 方法打开文件下载链接
-  window.open(url, "_blank");
+
+  console.log("文件扩展名:", row.fileExtension);
+  if (row.fileExtension === '.pdf' && preview) {
+    // 对于PDF文件，打开浏览器进行预览
+    console.log("是PDF文件，进行预览");
+    window.open(url + "?preview=true", "_blank");
+  } else {
+    // 对于其他文件，直接下载
+    console.log("不是PDF文件，直接下载");
+    window.open(url, "_self");
+  }
 };
 
 // 点击“编辑”按钮

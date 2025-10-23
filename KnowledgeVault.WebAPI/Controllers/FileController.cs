@@ -1,5 +1,6 @@
 ﻿using KnowledgeVault.WebAPI.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace KnowledgeVault.WebAPI.Controllers
 {
@@ -23,6 +24,11 @@ namespace KnowledgeVault.WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> UploadAsync(IFormFile file)
         {
+            bool onlyPDF = config.GetValue<bool>("OnlyAcceptPDF");
+            if (onlyPDF && Path.GetExtension(file.FileName).ToLower() != ".pdf")
+            {
+                throw new StatusBasedException("仅接受PDF格式的文件", System.Net.HttpStatusCode.BadRequest);
+            }
             return Ok(await fileService.UploadAsync(file));
         }
 
@@ -30,14 +36,41 @@ namespace KnowledgeVault.WebAPI.Controllers
         /// 下载文件
         /// </summary>
         /// <param name="id">成果的FileID值</param>
+        /// <param name="preview">预览形式</param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        public async Task<IActionResult> DownloadAsync(string id)
+        public async Task<IActionResult> DownloadAsync(string id, [FromQuery] bool preview = false)
         {
-            var mimeType = "application/octet-stream";
+            id = Path.GetFileNameWithoutExtension(id);
             var file = await fileService.DownloadAsync(id);
-            var stream = System.IO.File.OpenRead(file.DiskFilePath);
+            var filePath = file.DiskFilePath;
+
+            // 根据文件类型动态设置 Content-Type
+            var mimeType = GetMimeType(file.FileName);
+
+            var stream = System.IO.File.OpenRead(filePath);
+            if(preview)
+            {
+                return File(stream, mimeType);
+            }
             return File(stream, mimeType, file.FileName);
+        }
+
+        private string GetMimeType(string filePath)
+        {
+            // 你可以根据文件的扩展名来设置 MIME 类型
+            var extension = Path.GetExtension(filePath).ToLower();
+
+            return extension switch
+            {
+                ".pdf" => "application/pdf",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ".txt" => "text/plain",
+                _ => "application/octet-stream",
+            };
         }
 
         /// <summary>

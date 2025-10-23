@@ -65,7 +65,7 @@ namespace KnowledgeVault.WebAPI.Service
             if (file == null || file.Length == 0)
             {
                 throw new StatusBasedException("文件为空", System.Net.HttpStatusCode.BadRequest);
-            }
+            }          
 
             var id = Guid.NewGuid().ToString("N");
             var extension = Path.GetExtension(file.FileName);
